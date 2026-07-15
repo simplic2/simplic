@@ -18,16 +18,49 @@
         </div>
     </div>
     <div id="app" class="hidden">
-        <div class="container">
-            <div id="painelAdm" class="card hidden" style="margin-bottom:20px; border:2px solid var(--blue);">
-                <h3>👑 Painel Administrativo</h3>
-                <div id="admStats" class="grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom:15px;"></div>
-                <div class="flex-group">
-                    <input id="newOpUser" placeholder="Novo Operador">
-                    <input id="newOpPass" placeholder="Senha">
-                    <button class="blue" onclick="cadastrarOperador()">Criar Usuário</button>
-                </div>
+    <div class="container">
+        
+        <!-- PAINEL ADMIN (APARECE SÓ PARA ADMIN) -->
+        <div id="painelAdm" class="card hidden" style="margin-bottom: 25px; border: 2px solid var(--blue);">
+            <h3>👑 Painel Administrativo</h3>
+            <div id="admStats" class="grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 15px;"></div>
+            <div class="flex-group">
+                <input id="newOpUser" placeholder="Usuário">
+                <input id="newOpPass" placeholder="Senha">
+                <button class="blue" onclick="cadastrarOperador()">Criar Usuário</button>
             </div>
+        </div>
+
+        <!-- LAYOUT ORIGINAL RESTAURADO -->
+        <div class="header-app">
+            <h1>CRM Whatsapp</h1>
+            <div class="user-badge">
+                <span id="lblUsuario">---</span>
+                <a href="#" onclick="logout()" style="color:var(--red);">Sair</a>
+            </div>
+        </div>
+
+        <div class="kpi-container">
+            <div class="kpi-card"><span class="kpi-title">📋 Total na Fila</span><span class="kpi-value" id="kpiTotalFila">0</span></div>
+            <div class="kpi-card"><span class="kpi-title">🚀 Enviados Hoje</span><span class="kpi-value" id="kpiEnviados">0</span></div>
+            <div class="kpi-card"><span class="kpi-title">🟢 Ativos</span><span class="kpi-value" id="kpiAtivos">0</span></div>
+            <div class="kpi-card"><span class="kpi-title">⚠️ Restritos</span><span class="kpi-value" id="kpiRestritos">0</span></div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>👥 Fila de Acionamentos</h3>
+                <input id="buscaContatoInput" oninput="filtrarEBuscarFila()" placeholder="🔍 Buscar...">
+                <div id="lista" style="margin-top: 15px;"></div>
+            </div>
+            <div class="card">
+                <h3>📝 Mensagens</h3>
+                <div id="scriptsContainerList"></div>
+                <div id="preview"></div>
+            </div>
+        </div>
+    </div>
+</div>
             <button class="red" onclick="logout()">Sair do Sistema</button>
             <div id="lista"></div>
         </div>
