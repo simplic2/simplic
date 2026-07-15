@@ -1,13 +1,27 @@
-function updateWhatsappTemplates(brand) {
-    const templateInput = document.getElementById('wa-template');
-    if (brand === 'simplic') {
-        templateInput.value = "Olá! Identificamos o seu interesse no crédito rápido da Simplic. Vamos dar andamento ao seu cadastro?";
-    } else {
-        templateInput.value = "Olá! Obrigado por entrar em contato com a Loft. Gostaria de agendar uma visita ao seu imóvel selecionado?";
-    }
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const btnSend = document.getElementById('btnSendWhatsApp');
+    
+    if (btnSend) {
+        btnSend.addEventListener('click', () => {
+            const clientName = document.getElementById('clientName').value;
+            const chargeValue = document.getElementById('chargeValue').value;
+            const paymentLink = document.getElementById('paymentLink').value;
+            const template = document.getElementById('whatsappTemplate').value;
 
-document.getElementById('btnTestWA').addEventListener('click', () => {
-    const message = document.getElementById('wa-template').value;
-    alert(`🚀 [SIMULADOR DE ENVIO] Mensagem enviada com sucesso:\n\n"${message}"`);
+            if (!clientName || !chargeValue || !paymentLink) {
+                alert("Por favor, preencha os dados e gere o link de pagamento primeiro!");
+                return;
+            }
+
+            // Substitui as variáveis no texto do template
+            let message = template
+                .replace('[Nome]', clientName)
+                .replace('[Valor]', chargeValue)
+                .replace('[Link]', paymentLink);
+
+            // Abre o WhatsApp Web com o texto pronto
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://api.whatsapp.com/send?text=${encodedMessage}`, '_blank');
+        });
+    }
 });
