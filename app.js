@@ -101,13 +101,33 @@ async function carregarStatsAdm() {
     document.getElementById("admStats").innerHTML = html;
 }
 
-async function cadastrarOperador() {
-    let u = document.getElementById("newOpUser").value;
-    let p = document.getElementById("newOpPass").value;
-    if(!u || !p) return showToast("Preencha campos", "error");
-    await supabaseClient.from('users').insert([{ username: u, password: p, role: 'operador' }]);
-    showToast("Operador criado!");
-    carregarStatsAdm();
+async function login(){
+    let userDigitado = document.getElementById("user").value.trim();
+    let passDigitado = document.getElementById("pass").value.trim();
+
+    const { data: user, error } = await supabaseClient
+        .from('users')
+        .select('*')
+        .eq('username', userDigitado)
+        .eq('password', passDigitado)
+        .single();
+
+    if (!user) return showToast("Usuário ou senha inválidos!", "error");
+
+    usuarioLogado = user.username;
+    document.getElementById("lblUsuario").innerText = usuarioLogado;
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+
+    // Mostra o painel admin apenas se for admin
+    if (user.role === 'admin') {
+        document.getElementById("painelAdm").classList.remove("hidden");
+        carregarStatsAdm();
+    } else {
+        document.getElementById("painelAdm").classList.add("hidden");
+    }
+    
+    await syncLoadAll();
 }
 
 function logout() {
