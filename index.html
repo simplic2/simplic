@@ -3,33 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Multimarcas - Simplic & Loft</title>
-    <!-- CSS Principal -->
+    <title>Gerador de Cobrança - Simplic & Loft</title>
+    <!-- CSS Separado -->
     <link rel="stylesheet" href="css/style.css">
-    <!-- FontAwesome para Ícones -->
+    <!-- FontAwesome para os ícones modernos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js para os Gráficos do Dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="brand-simplic"> <!-- Classe inicial: simplic -->
+<body class="brand-simplic">
 
-    <!-- Loader de Inicialização -->
+    <!-- ⚡ Loader de Inicialização -->
     <div id="loader" class="loader-container">
         <div class="spinner"></div>
-        <p>Carregando painel premium...</p>
+        <p>Carregando ferramenta de cobrança...</p>
     </div>
 
     <div class="wrapper">
-        <!-- 📱 Sidebar Profissional -->
+        <!-- 📱 Sidebar Lateral -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <!-- A logo muda dinamicamente via CSS/JS baseado na classe do body -->
                 <div class="brand-logo"></div>
             </div>
             
-            <!-- Seletor de Marca Premium -->
+            <!-- Seletor de Marca (Simplic/Loft) que altera as cores do painel -->
             <div class="brand-selector-container">
-                <label><i class="fa-solid fa-sliders"></i> Selecionar Parceiro</label>
+                <label><i class="fa-solid fa-sliders"></i> Operar como:</label>
                 <select id="brandSelector" class="brand-select">
                     <option value="simplic">Simplic</option>
                     <option value="loft">Loft</option>
@@ -38,102 +37,104 @@
 
             <nav class="sidebar-menu">
                 <ul>
-                    <li class="active" data-target="dashboard-section">
-                        <a href="#"><i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span></a>
+                    <li class="active" data-target="gerador-section">
+                        <a href="#"><i class="fa-solid fa-receipt"></i> <span>Gerador</span></a>
+                    </li>
+                    <li data-target="dashboard-section">
+                        <a href="#"><i class="fa-solid fa-chart-line"></i> <span>Dashboard</span></a>
                     </li>
                     <li data-target="whatsapp-section">
-                        <a href="#"><i class="fa-brands fa-whatsapp"></i> <span>WhatsApp Hub</span></a>
-                    </li>
-                    <li data-target="settings-section">
-                        <a href="#"><i class="fa-solid fa-gear"></i> <span>Configurações</span></a>
+                        <a href="#"><i class="fa-brands fa-whatsapp"></i> <span>WhatsApp</span></a>
                     </li>
                 </ul>
             </nav>
         </aside>
 
-        <!-- Conteúdo Principal -->
+        <!-- Área Principal -->
         <main class="main-content">
             <header class="top-header">
                 <button id="toggleSidebar" class="toggle-btn"><i class="fa-solid fa-bars"></i></button>
                 <div class="user-profile">
-                    <span id="welcome-message">Olá, Operador <strong>Simplic</strong></span>
-                    <div class="avatar"><i class="fa-solid fa-user-tie"></i></div>
+                    <span id="welcome-message">Painel de Cobrança <strong>Simplic</strong></span>
                 </div>
             </header>
 
             <div class="content-body">
                 
-                <!-- 📊 Seção do Dashboard -->
-                <section id="dashboard-section" class="tab-content active">
+                <!-- 🎯 SEÇÃO DO GERADOR (O coração do seu site original) -->
+                <section id="gerador-section" class="tab-content active">
                     <div class="section-title">
-                        <h2>Visão Geral do Painel</h2>
-                        <p>Acompanhe os dados de performance em tempo real.</p>
+                        <h2>Gerar Nova Cobrança</h2>
+                        <p>Preencha os dados abaixo para gerar o link e enviar ao cliente.</p>
                     </div>
 
-                    <!-- Cards de KPI rápidos -->
-                    <div class="kpi-grid">
-                        <div class="kpi-card">
-                            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
-                            <div class="kpi-data">
-                                <h3>Total de Leads</h3>
-                                <span class="kpi-value" id="kpi-leads">1,248</span>
+                    <div class="card-premium">
+                        <!-- IMPORTANTE: Mantenha aqui dentro EXATAMENTE os inputs e IDs que seus arquivos js usam. 
+                             Estou usando nomes genéricos comuns, ajuste os IDs abaixo se seus scripts usarem nomes diferentes -->
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="clientName">Nome do Cliente</label>
+                                <input type="text" id="clientName" placeholder="Ex: João Silva" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="chargeValue">Valor da Cobrança (R$)</label>
+                                <input type="number" id="chargeValue" placeholder="0,00" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="dueDate">Data de Vencimento</label>
+                                <input type="date" id="dueDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="installments">Parcelas</label>
+                                <select id="installments">
+                                    <option value="1">À vista (1x)</option>
+                                    <option value="2">2x sem juros</option>
+                                    <option value="3">3x sem juros</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="kpi-card">
-                            <div class="kpi-icon"><i class="fa-solid fa-comments"></i></div>
-                            <div class="kpi-data">
-                                <h3>Conversas Ativas</h3>
-                                <span class="kpi-value" id="kpi-chats">312</span>
-                            </div>
+
+                        <div class="form-group full-width">
+                            <label for="paymentLink">Link de Pagamento Gerado</label>
+                            <input type="text" id="paymentLink" placeholder="O link gerado aparecerá aqui..." readonly>
                         </div>
-                        <div class="kpi-card">
-                            <div class="kpi-icon"><i class="fa-solid fa-circle-check"></i></div>
-                            <div class="kpi-data">
-                                <h3>Conversão</h3>
-                                <span class="kpi-value" id="kpi-conversion">24.5%</span>
-                            </div>
+
+                        <div class="button-group">
+                            <button id="btnGenerate" class="btn-primary">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Link
+                            </button>
+                            <button id="btnSendWhatsApp" class="btn-whatsapp-action">
+                                <i class="fa-brands fa-whatsapp"></i> Enviar Cobrança
+                            </button>
                         </div>
                     </div>
+                </section>
 
-                    <!-- Área de Gráficos -->
+                <!-- 📊 SEÇÃO DO DASHBOARD (Novo pedido) -->
+                <section id="dashboard-section" class="tab-content">
+                    <div class="section-title">
+                        <h2>Dashboard de Desempenho</h2>
+                        <p>Acompanhamento de conversões e disparos.</p>
+                    </div>
                     <div class="charts-container">
                         <div class="chart-box">
-                            <h3>Conversões Semanais</h3>
+                            <h3>Links Gerados vs Pagos</h3>
                             <canvas id="conversionChart"></canvas>
                         </div>
-                        <div class="chart-box">
-                            <h3>Origem dos Contatos</h3>
-                            <canvas id="sourceChart"></canvas>
-                        </div>
                     </div>
                 </section>
 
-                <!-- Seção WhatsApp -->
+                <!-- 📱 SEÇÃO DO WHATSAPP (Ajustes de Mensagem) -->
                 <section id="whatsapp-section" class="tab-content">
                     <div class="section-title">
-                        <h2>Integração WhatsApp</h2>
-                        <p>Configure e envie mensagens automáticas para seus clientes.</p>
+                        <h2>Modelos de Mensagem</h2>
+                        <p>Configure o texto padrão que é enviado no WhatsApp.</p>
                     </div>
-                    <div class="whatsapp-card">
-                        <div class="whatsapp-status">
-                            <span class="status-indicator online"></span>
-                            <span>API Simplic/Loft Conectada</span>
-                        </div>
+                    <div class="card-premium">
                         <div class="form-group">
-                            <label for="wa-template">Modelo de Mensagem:</label>
-                            <textarea id="wa-template" placeholder="Olá! Temos uma proposta especial da [Marca] para você..."></textarea>
+                            <label for="whatsappTemplate">Texto do Template</label>
+                            <textarea id="whatsappTemplate" rows="5">Olá [Nome], segue o link para pagamento da sua parcela no valor de R$ [Valor]: [Link]</textarea>
                         </div>
-                        <button class="btn-whatsapp" id="btnTestWA">
-                            <i class="fa-brands fa-whatsapp"></i> Testar Envio
-                        </button>
-                    </div>
-                </section>
-
-                <!-- Seção Configurações -->
-                <section id="settings-section" class="tab-content">
-                    <div class="section-title">
-                        <h2>Configurações Gerais</h2>
-                        <p>Gerencie preferências da sua conta e integrações.</p>
                     </div>
                 </section>
 
@@ -141,7 +142,7 @@
         </main>
     </div>
 
-    <!-- Scripts de controle -->
+    <!-- ⚡ IMPORTAÇÃO DOS SEUS SCRIPTS SEPARADOS -->
     <script src="js/dashboard.js"></script>
     <script src="js/whatsapp.js"></script>
     <script src="js/scripts.js"></script>
