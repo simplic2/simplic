@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM Whatsapp </title>
+    <title>CRM Whatsapp</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Stylesheet -->
@@ -21,6 +21,11 @@
             <p>Painel de Controle Operacional</p>
             <input id="user" placeholder="Usuário">
             <input id="pass" type="password" placeholder="Senha">
+            <!-- SELETOR DE CARTEIRA ADICIONADO -->
+            <select id="selectCarteira" style="margin-top: 12px; font-weight: 600;">
+                <option value="Simplic">Carteira Simplic</option>
+                <option value="Loft">Carteira Loft</option>
+            </select>
             <button class="green" style="width:100%; margin-top: 18px;" onclick="login()">Entrar no Sistema</button>
         </div>
     </div>
@@ -29,14 +34,26 @@
     <div id="app" class="hidden">
         <div class="container">
             
-            <!-- PAINEL ADMINISTRATIVO (INSERIDO AQUI) -->
+            <!-- PAINEL ADMINISTRATIVO COM FILTROS DE CARTEIRA -->
             <div id="painelAdm" class="card hidden" style="margin-bottom: 25px; border: 2px solid var(--blue);">
-                <h3 style="margin-top: 0;">👑 Painel Administrativo</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">👑 Painel Administrativo</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="blue" style="margin:0; padding: 6px 12px;" onclick="carregarStatsAdm('Simplic')">Ver Simplic</button>
+                        <button class="blue" style="margin:0; padding: 6px 12px;" onclick="carregarStatsAdm('Loft')">Ver Loft</button>
+                        <button class="gray" style="margin:0; padding: 6px 12px;" onclick="carregarStatsAdm('todos')">Ver Todos</button>
+                    </div>
+                </div>
+                
                 <div id="admStats" class="grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 15px;"></div>
                 <div class="flex-group">
-                    <input id="newOpUser" placeholder="Usuário">
-                    <input id="newOpPass" placeholder="Senha">
-                    <button class="blue" onclick="cadastrarOperador()">Criar Usuário</button>
+                    <input id="newOpUser" placeholder="Novo Usuário">
+                    <input id="newOpPass" placeholder="Nova Senha">
+                    <select id="newOpCarteira" style="margin-top:4px;">
+                        <option value="Simplic">Simplic</option>
+                        <option value="Loft">Loft</option>
+                    </select>
+                    <button class="green" onclick="cadastrarOperador()">Criar Usuário</button>
                 </div>
             </div>
 
@@ -46,10 +63,14 @@
                 <div class="user-badge">
                     <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
                     <span>Operador: <strong id="lblUsuario" style="color: var(--primary);">---</strong></span>
-                    <span style="color: rgba(255,255,255,0.15)">|</span>
-                    <a href="#" onclick="abrirModal('modalJogo')" style="color: var(--blue); font-size: 12px; text-decoration: none; font-weight: 600;">🎮 Jogo da Velha</a>
-                    <span style="color: rgba(255,255,255,0.15)">|</span>
-                    <a href="#" onclick="abrirModal('modalMusica')" style="color: var(--orange); font-size: 12px; text-decoration: none; font-weight: 600;">🎵 Player Premium</a>
+                    
+                    <!-- IDs ADICIONADOS AQUI PARA ESCONDER NO ADMIN -->
+                    <span id="sepJogo" style="color: rgba(255,255,255,0.15)">|</span>
+                    <a id="linkJogo" href="#" onclick="abrirModal('modalJogo')" style="color: var(--blue); font-size: 12px; text-decoration: none; font-weight: 600;">🎮 Jogo da Velha</a>
+                    
+                    <span id="sepMusica" style="color: rgba(255,255,255,0.15)">|</span>
+                    <a id="linkMusica" href="#" onclick="abrirModal('modalMusica')" style="color: var(--orange); font-size: 12px; text-decoration: none; font-weight: 600;">🎵 Player Premium</a>
+                    
                     <span style="color: rgba(255,255,255,0.15)">|</span>
                     <a href="#" onclick="logout()" style="color: var(--red); font-size: 12px; text-decoration: none; font-weight: 600;">Sair</a>
                 </div>
@@ -189,8 +210,135 @@
         </div>
     </div>
 
-    <!-- MODAIS E SCRIPTS FICAM APÓS O CONTEÚDO -->
-    <!-- (Mantenha seus modais originais aqui...) -->
+    <!-- MANTIVE SEUS MODAIS ORIGINAIS AQUI (Você pode apenas deixar os que já existiam no final do seu HTML) -->
+    <!-- MODAL IMPORTAR CONTATOS -->
+    <div id="modalContatos" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Importar Contatos</h3>
+            <label class="small">Script Padrão para essa lista:</label>
+            <select id="modalSelectScriptDefinido" style="margin-bottom: 10px;"></select>
+            <label class="small">Cole os contatos (formato: Numero;Nome)</label>
+            <textarea id="telefonesInputModal" rows="6" placeholder="11999999999;João Silva&#10;11888888888;Maria Souza"></textarea>
+            <div class="flex-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="gray" onclick="fecharModal('modalContatos')">Cancelar</button>
+                <button class="green" onclick="salvarContatos()">Importar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SCRIPT -->
+    <div id="modalScript" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="tituloScriptModal">Criar Script</h3>
+            <input type="hidden" id="editScriptId">
+            <input id="nomeScriptModal" placeholder="Nome do Script (ex: Cobrança Atraso)">
+            <textarea id="textoScriptModal" rows="6" placeholder="Olá {nome}, tudo bem? ..."></textarea>
+            <div class="small" style="margin-top: 8px; color: var(--text-muted);">Use <strong>{nome}</strong> para puxar o nome da lista.</div>
+            <div class="flex-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="gray" onclick="fecharModal('modalScript')">Cancelar</button>
+                <button class="green" onclick="salvarScript()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR CONTA WHATSAPP -->
+    <div id="modalEditar" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Editar Instância</h3>
+            <label class="small">Número</label>
+            <input id="editModalNumero">
+            <label class="small" style="margin-top: 10px; display: block;">Total Enviados</label>
+            <input id="editModalSent" type="number">
+            
+            <label class="small" style="margin-top: 10px; display: block;">Função da Conta</label>
+            <select id="editModalRole">
+                <option value="preventive">Preventivo</option>
+                <option value="acoes">Ações</option>
+                <option value="reserva">Reserva</option>
+            </select>
+            
+            <label class="small" style="margin-top: 10px; display: block;">Navegador Utilizado</label>
+            <select id="editModalBrowser">
+                <option value="chrome">Google Chrome</option>
+                <option value="edge">Microsoft Edge</option>
+            </select>
+
+            <label class="small" style="margin-top: 10px; display: block;">Status Operacional</label>
+            <select id="editModalStatus" onchange="toggleTempoRestritoVisibilidade()">
+                <option value="ativo">Ativo (Normal)</option>
+                <option value="restrito">Restrito (Esfriar conta)</option>
+                <option value="banido">Banido (Bloqueio Total)</option>
+            </select>
+
+            <div id="containerTempoRestrito" class="hidden" style="margin-top: 10px; background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                <label class="small" style="color: var(--orange);">Tempo de Resfriamento (Horas)</label>
+                <input id="editModalTempo" type="number" step="0.5" placeholder="Ex: 2 ou 2.5">
+            </div>
+
+            <div class="flex-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="gray" onclick="fecharModal('modalEditar')">Cancelar</button>
+                <button id="btnSalvarEdicao" class="green">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MUSICA -->
+    <div id="modalMusica" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 480px;">
+            <h3>🎵 Player Premium</h3>
+            <div class="filter-tabs">
+                <button id="tabBtnBusca" class="filter-btn active" onclick="mudarAbaMusica('busca')">Buscar Música</button>
+                <button id="tabBtnLink" class="filter-btn" onclick="mudarAbaMusica('link')">Colar Link Direto</button>
+            </div>
+            
+            <div id="abaMusicaBusca">
+                <div style="display:flex; gap:8px;">
+                    <input id="inputBuscaNome" placeholder="Ex: Chill lofi beats..." style="margin:0;">
+                    <button class="blue" onclick="buscarMusicaPorNome()" style="margin:0;">Buscar</button>
+                </div>
+                <div id="containerResultadosBusca" style="margin-top:15px; max-height:200px; overflow-y:auto; background:var(--bg-input); border-radius:8px; border:1px solid var(--border-color);">
+                    <div style="padding:15px; text-align:center; color:var(--text-muted); font-size:12px;">Busque um artista ou música, ou ouça a rádio padrão.</div>
+                </div>
+                <button class="orange" style="width:100%; margin-top:15px;" onclick="carregarLofiPadrao()">🎧 Tocar Rádio Lofi Padrão 24/7</button>
+            </div>
+
+            <div id="abaMusicaLink" class="hidden">
+                <label class="small">Link do YouTube, ZenoFM ou MP3</label>
+                <input id="inputLinkMusica" placeholder="Cole a URL aqui..." style="margin-top:4px;">
+                <button class="green" style="width:100%; margin-top:10px;" onclick="carregarMusicaUrl()">Carregar Mídia</button>
+            </div>
+
+            <div class="flex-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="gray" onclick="fecharModal('modalMusica')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL JOGO DA VELHA -->
+    <div id="modalJogo" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 320px; text-align: center;">
+            <h3 style="margin-bottom: 5px;">🎮 Jogo da Velha (vs IA)</h3>
+            <p id="statusJogo" class="small" style="color: var(--blue); margin-top: 0;">Sua vez! (Você é o X)</p>
+            
+            <div id="tabuleiroJogo" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; background: var(--bg-input); padding: 5px; border-radius: 10px; margin-top: 15px;">
+                <div class="quadrado" onclick="jogada(0)" style="background: var(--bg-card); height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; border-radius: 6px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(1)" style="background: var(--bg-card); height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; border-radius: 6px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(2)" style="background: var(--bg-card); height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; border-radius: 6px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(3)" style="background: var(--bg-card); height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; border-radius: 6px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(4)" style="background: var(--bg-card); height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; border-radius: 6px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(5)" style="background: var(--bg-card); height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; border-radius: 6px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(6)" style="background: var(--bg-card); height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; border-radius: 6px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(7)" style="background: var(--bg-card); height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; border-radius: 6px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(8)" style="background: var(--bg-card); height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; border-radius: 6px; cursor: pointer;"></div>
+            </div>
+
+            <div class="flex-group" style="justify-content: center; margin-top: 15px;">
+                <button class="gray" onclick="fecharModal('modalJogo')">Fechar</button>
+                <button class="green" onclick="resetJogo()">Reiniciar Jogo</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
