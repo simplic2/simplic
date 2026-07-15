@@ -95,6 +95,10 @@ async function login(){
         usuarioLogado = "Maria";
         empresasPermitidas = ["Simplic"]; // Apenas Simplic
     }
+        else if (userDigitado === "Fabio" && passDigitadoAtual === "fabio") {
+        usuarioLogado = "Fabio";
+        empresasPermitidas = ["Loft"]; // Apenas Simplic
+    }
     // -------------------------------------------------------------------------
     // 👑 NOVO USUÁRIO ADMINISTRADOR (Acessa Loft E Simplic)
     // -------------------------------------------------------------------------
