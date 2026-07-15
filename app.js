@@ -1,69 +1,43 @@
-const SUPABASE_URL = "https://kgidkxaqvgcqiqwqxvut.supabase.co"; 
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnaWRreGFxdmdjcWlxd3F4dnV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0ODc0MzAsImV4cCI6MjA5ODA2MzQzMH0.DLQoO8_q_QeW-a084ZDCFRc0OIeuEDaYpkUg2tSCB0E";
+// ==========================================
+// CONFIGURAÇÕES SUPABASE
+// ==========================================
+const SUPABASE_URL = "SUA_URL_DO_SUPABASE_AQUI";
+const SUPABASE_KEY = "SUA_CHAVE_ANON_DO_SUPABASE_AQUI";
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let contatos = [];
-let whatsappAccounts = [];
-let listaScripts = [];
-let contaEditandoIndex = null;
+// VARIÁVEIS GLOBAIS DE ESTADO
 let usuarioLogado = "";
 let empresaSelecionada = "";
-let previewTimerInterval = null;
+let whatsappAccounts = []; // Exemplo para o setInterval do real-time
 
-let filtroStatusAtual = 'todos';
-let regressiveTimerPointer = null;
-let segundosRestantesRegressivo = 5;
-
-// TOAST NOTIFICATIONS FUNCTION
-function showToast(mensagem, tipo = 'success') {
+// ==========================================
+// TOAST NOTIFICATIONS
+// ==========================================
+function showToast(message, type = "success") {
     const container = document.getElementById("toast-container");
+    if (!container) return;
+
     const toast = document.createElement("div");
-    toast.className = "toast";
+    toast.className = `toast ${type}`;
     
-    let borderColors = { success: 'var(--primary)', error: 'var(--red)', info: 'var(--blue)', warning: 'var(--orange)' };
-    toast.style.borderLeftColor = borderColors[tipo] || 'var(--primary)';
-    
-    let icon = tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : tipo === 'warning' ? '⚠️' : 'ℹ️';
-    toast.innerHTML = `<span>${icon}</span> <span>${mensagem}</span>`;
-    
+    let icon = "🔔";
+    if (type === "success") icon = "✅";
+    if (type === "error") icon = "❌";
+    if (type === "warning") icon = "⚠️";
+
+    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
     container.appendChild(toast);
+
     setTimeout(() => {
-        toast.style.animation = "fadeIn 0.3s ease reverse";
+        toast.style.opacity = "0";
         setTimeout(() => toast.remove(), 300);
-    }, 3500);
+    }, 4000);
 }
 
-function formatRemainingTime(timestamp){
-    const diff = timestamp - Date.now();
-    if(diff <= 0) return "Liberado";
-    const horas = Math.floor((diff % 86400000) / 3600000);
-    const minutos = Math.floor((diff % 3600000) / 60000);
-    const segundos = Math.floor((diff % 60000) / 1000);
-    return `${horas}h ${minutos}m ${segundos}s`;
-}
-
-function abrirModal(id) { document.getElementById(id).classList.remove("hidden"); }
-function fecharModal(id) { document.getElementById(id).classList.add("hidden"); }
-
-function abrirModalContatos() {
-    let select = document.getElementById("modalSelectScriptDefinido");
-    select.innerHTML = "";
-    if(listaScripts.length === 0) {
-        select.innerHTML = `<option value="">⚠️ Crie um script primeiro!</option>`;
-    } else {
-        listaScripts.forEach((s, idx) => {
-            select.innerHTML += `<option value="${idx}">${s.nome}</option>`;
-        });
-    }
-    abrirModal("modalContatos");
-}
-
-function toggleTempoRestritoVisibilidade() {
-    let status = document.getElementById("editModalStatus").value;
-    document.getElementById("containerTempoRestrito").classList.toggle("hidden", status !== "restrito");
-}
-
+// ==========================================
+// SISTEMA DE LOGIN (CONECTADO AO SUPABASE)
+// ==========================================
 async function login(){
     let userField = document.getElementById("user");
     let passField = document.getElementById("pass");
@@ -76,712 +50,223 @@ async function login(){
 
     let userDigitado = userField.value.trim();
     let passDigitadoAtual = passField.value.trim(); 
-    let empresaEscolhida = companyField.value; // "Simplic" ou "Loft"
+    let empresaEscolhida = companyField.value;
 
-    // =========================================================================
-    // CADASTRO DE USUÁRIOS, SENHAS E EMPRESAS PERMITIDAS (AGORA COM SUPORTE A ADM)
-    // =========================================================================
-    let empresasPermitidas = []; // Lista de empresas que o usuário pode acessar
+    try {
+        // Busca o operador diretamente na tabela 'system_operators'
+        const { data: usuario, error } = await _supabase
+            .from('system_operators')
+            .select('*')
+            .eq('username', userDigitado)
+            .single();
 
-    if (userDigitado === "Levi" && passDigitadoAtual === "2104") {
-        usuarioLogado = "Levi";
-        empresasPermitidas = ["Simplic"]; // Apenas Simplic
-    } 
-    else if (userDigitado === "Mariana" && passDigitadoAtual === "123mudar") {
-        usuarioLogado = "Mariana";
-        empresasPermitidas = ["Simplic"]; // Apenas Simplic
-    } 
-    else if (userDigitado === "Maria" && passDigitadoAtual === "duda2025") {
-        usuarioLogado = "Maria";
-        empresasPermitidas = ["Simplic"]; // Apenas Simplic
-    }
-        else if (userDigitado === "Fabio" && passDigitadoAtual === "fabio") {
-        usuarioLogado = "Fabio";
-        empresasPermitidas = ["Loft"]; // Apenas Loft
-    }
-    // -------------------------------------------------------------------------
-    // 👑 NOVO USUÁRIO ADMINISTRADOR (Acessa Loft E Simplic)
-    // -------------------------------------------------------------------------
-    else if (userDigitado === "Admin" && passDigitadoAtual === "admin2026") {
-        usuarioLogado = "Admin";
-        empresasPermitidas = ["Simplic", "Loft"]; // Pode entrar em qualquer uma das duas!
-    }
-    // =========================================================================
+        if (error || !usuario || usuario.password !== passDigitadoAtual) {
+            showToast("Login ou senha incorretos!", "error");
+            return;
+        }
 
-    else {
-        showToast("Login ou senha incorretos!", "error");
-        return;
-    } 
-    
-    // Validação de segurança: Verifica se a empresa que ele selecionou está na lista de permitidas dele
-    if (!empresasPermitidas.includes(empresaEscolhida)) {
-        showToast(`Acesso negado! O usuário ${usuarioLogado} não tem permissão para acessar o painel da ${empresaEscolhida}.`, "error");
-        usuarioLogado = ""; 
-        return;
+        let empresasPermitidas = usuario.allowed_companies;
+
+        // Validação estrita de escopo de empresa
+        if (!empresasPermitidas.includes(empresaEscolhida)) {
+            showToast(`Acesso negado! O usuário ${userDigitado} não tem permissão para acessar a ${empresaEscolhida}.`, "error");
+            return;
+        }
+
+        usuarioLogado = usuario.username;
+        empresaSelecionada = empresaEscolhida;
+
+        // Persiste as credenciais codificadas no sessionStorage
+        sessionStorage.setItem("_ss_op", btoa(usuarioLogado));
+        sessionStorage.setItem("_ss_company", btoa(empresaSelecionada));
+
+        // Configura visibilidade do botão de Admin
+        checkAdminButton();
+
+        document.getElementById("lblUsuario").innerText = usuarioLogado;
+        document.getElementById("lblEmpresaAtiva").innerText = empresaSelecionada.toUpperCase() + " WHATSAPP";
+
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+
+        showToast(`Bem-vindo, ${usuarioLogado}!`, "success");
+        await syncLoadAll();
+
+    } catch (err) {
+        console.error(err);
+        showToast("Erro ao tentar autenticar. Verifique sua rede.", "error");
     }
-    
-    // Se passou na validação, autoriza o login normalmente
-    empresaSelecionada = empresaEscolhida;
-    sessionStorage.setItem("_ss_op", btoa(usuarioLogado));
-    sessionStorage.setItem("_ss_company", btoa(empresaSelecionada));
-    
-    document.getElementById("lblUsuario").innerText = usuarioLogado;
-    document.getElementById("lblEmpresaAtiva").innerText = empresaSelecionada.toUpperCase() + " Whatsapp";
-    
-    document.getElementById("login").classList.add("hidden");
-    document.getElementById("app").classList.remove("hidden");
-    
-    showToast(`Bem-vindo de volta à ${empresaSelecionada}, ${usuarioLogado}!`, "success");
-    await syncLoadAll();
 }
 
+// ==========================================
+// SAÍDA E LOGOUT DO SISTEMA
+// ==========================================
 function logout() {
+    sessionStorage.clear();
     usuarioLogado = "";
     empresaSelecionada = "";
-    sessionStorage.clear();
-    fecharMiniPlayer();
-    document.getElementById("app").classList.add("hidden");
+    
     document.getElementById("login").classList.remove("hidden");
-    showToast("Sessão encerrada com sucesso.");
+    document.getElementById("app").classList.add("hidden");
+    document.getElementById("btnAdminPanel").classList.add("hidden");
+    
+    showToast("Sessão encerrada com sucesso.", "info");
 }
 
-async function syncLoadAll() {
-    if(!usuarioLogado || !empresaSelecionada) return;
+// ==========================================
+// VISIBILIDADE DO PAINEL ADMIN
+// ==========================================
+function checkAdminButton() {
+    let btnAdmin = document.getElementById("btnAdminPanel");
+    if (btnAdmin) {
+        if (usuarioLogado === "Admin") {
+            btnAdmin.classList.remove("hidden");
+        } else {
+            btnAdmin.classList.add("hidden");
+        }
+    }
+}
+
+async function openAdminPanel() {
+    document.getElementById("modalAdmin").classList.remove("hidden");
+    await loadAdminMetrics();
+}
+
+function closeAdminPanel() {
+    document.getElementById("modalAdmin").classList.add("hidden");
+}
+
+// ==========================================
+// MÉTRICAS E CONTADORES DO PAINEL ADMIN
+// ==========================================
+async function loadAdminMetrics() {
+    let tbody = document.getElementById("adminOperatorsTable");
+    tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-muted);">Carregando métricas em tempo real...</td></tr>`;
+
     try {
-        let resWa = await supabaseClient.from('whatsapp_accounts')
+        // Busca todos os operadores cadastrados no banco
+        const { data: operadores, error: errOp } = await _supabase
+            .from('system_operators')
             .select('*')
-            .eq('operator_name', usuarioLogado)
-            .eq('company', empresaSelecionada)
-            .order('id', { ascending: true });
-        whatsappAccounts = resWa.data || [];
+            .order('username', { ascending: true });
 
-        let resScr = await supabaseClient.from('message_scripts')
-            .select('*')
-            .eq('operator_name', usuarioLogado)
-            .eq('company', empresaSelecionada)
-            .order('id', { ascending: true });
-        listaScripts = resScr.data || [];
+        if (errOp) throw errOp;
 
-        let resCon = await supabaseClient.from('contacts_queue')
-            .select('*')
-            .eq('operator_name', usuarioLogado)
-            .eq('company', empresaSelecionada)
-            .order('id', { ascending: true });
-        contatos = resCon.data || [];
+        let html = "";
+        
+        for (let op of operadores) {
+            // Conta os contatos ativos na fila de cada operador
+            const { count: filaCount, error: errFila } = await _supabase
+                .from('contacts_queue')
+                .select('*', { count: 'exact', head: true })
+                .eq('operator_name', op.username);
 
-        renderKPIs();
-        renderWA();
-        renderScripts();
-        filtrarEBuscarFila();
+            // Filtra acionamentos feitos hoje (a partir de 00:00h)
+            let hoje = new Date();
+            hoje.setHours(0,0,0,0);
+
+            const { count: acionadosCount, error: errAcionados } = await _supabase
+                .from('contacts_queue')
+                .select('*', { count: 'exact', head: true })
+                .eq('operator_name', op.username)
+                .eq('status', 'enviado')
+                .gte('updated_at', hoje.toISOString());
+
+            let empresasTexto = op.allowed_companies.join(", ");
+
+            // Se for Administrador Geral, dá destaque estético na tabela
+            let opBadgeStyle = op.username === "Admin" ? "color: var(--orange); font-weight: 800;" : "font-weight: bold;";
+
+            html += `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px; ${opBadgeStyle}">👤 ${op.username}</td>
+                    <td style="padding: 12px; color: var(--text-muted);">${empresasTexto}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: bold; color: var(--blue); font-size: 14px;">${filaCount || 0}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: bold; color: var(--primary); font-size: 14px;">${acionadosCount || 0}</td>
+                </tr>
+            `;
+        }
+
+        tbody.innerHTML = html;
+
     } catch (error) {
-        console.error("Erro na sincronização:", error);
+        console.error("Erro ao puxar métricas:", error);
+        tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--red);">Erro ao carregar dados dos operadores.</td></tr>`;
     }
 }
 
-function renderKPIs() {
-    document.getElementById("kpiTotalFila").innerText = contatos.length;
-    document.getElementById("kpiEnviados").innerText = contatos.filter(c => c.status === "Enviado").length;
-    document.getElementById("kpiAtivos").innerText = whatsappAccounts.filter(w => w.status === "ativo").length;
-    document.getElementById("kpiRestritos").innerText = whatsappAccounts.filter(w => w.status === "restrito" || w.status === "banido").length;
-}
+// ==========================================
+// CADASTRAR NOVO USUÁRIO (VIA PAINEL)
+// ==========================================
+async function createUser(event) {
+    event.preventDefault();
 
-function limparEValidarTelefone(tel) {
-    let limpo = tel.replace(/\D/g, "");
-    if (limpo.length === 11 && limpo.startsWith("9")) {
-        limpo = "55" + limpo;
-    } else if (limpo.length === 11 && !limpo.startsWith("55")) {
-        limpo = "55" + limpo;
-    } else if (limpo.length === 9) {
-        limpo = "5511" + limpo;
-    }
-    return limpo;
-}
+    let usernameInput = document.getElementById("newUsername");
+    let passwordInput = document.getElementById("newUserPassword");
+    let companySelect = document.getElementById("newUserCompany");
 
-async function addWA(){
-    let num = document.getElementById("waNumber").value.trim();
-    let role = document.getElementById("waRole").value;
-    let browser = document.getElementById("waBrowser").value;
-    if(!num) return showToast("Digite um número válido", "warning");
+    let username = usernameInput.value.trim();
+    let password = passwordInput.value.trim();
+    let companyVal = companySelect.value;
 
-    num = limparEValidarTelefone(num);
-    let isFirst = whatsappAccounts.length === 0;
+    let allowedCompanies = companyVal === "Ambas" ? ["Simplic", "Loft"] : [companyVal];
 
-    await supabaseClient.from('whatsapp_accounts').insert([{
-        operator_name: usuarioLogado,
-        company: empresaSelecionada,
-        number: num,
-        sent: 0,
-        selected: isFirst,
-        status: "ativo",
-        role: role,
-        browser: browser
-    }]);
-
-    document.getElementById("waNumber").value = "";
-    showToast("Nova instância conectada!");
-    await syncLoadAll();
-}
-
-function renderWA(){
-    let html = "";
-    whatsappAccounts.forEach((w, i)=>{
-        let color = "#10b981";
-        let statusText = w.status;
-        let alarmTag = "";
-
-        if (w.sent >= 50) {
-            alarmTag = `<span class="badge-info safety-alert">⚠️ AQUECIMENTO MÁXIMO (${w.sent}/50)</span>`;
-        }
-
-        if(w.status === "restrito"){
-            color = "#f59e0b";
-            if(w.restricted_until) statusText = "restrito: " + formatRemainingTime(Number(w.restricted_until));
-        }
-        if(w.status === "banido") color = "#ef4444";
-
-        let roleLabels = { preventive: "Preventivo", acoes: "Ações", reserva: "Reserva" };
-        let roleColors = { preventive: "#3b82f6", acoes: "#ef4444", reserva: "#f59e0b" };
-        let currentRole = w.role || "preventive";
-
-        html += `
-        <div class="row" style="align-items: flex-start; padding: 14px 8px;">
-            <div>
-                <div style="display: flex; align-items: center; gap: 4px;">
-                    <input type="radio" name="wa" class="radio-custom" onchange="selectWA(${w.id})" ${w.selected ? "checked" : ""}>
-                    <span style="cursor:pointer; font-weight:600;" onclick="abrirEditarModal(${i})">${w.number}</span>
-                    <span class="small">(${w.sent} envios)</span>
-                    ${alarmTag}
-                </div>
-                <div style="margin-left: 26px; display: flex; gap: 6px;">
-                    <span class="badge-info" style="background: ${roleColors[currentRole]}20; color: ${roleColors[currentRole]}; border: 1px solid ${roleColors[currentRole]}30;">${roleLabels[currentRole]}</span>
-                </div>
-            </div>
-            <div class="action-buttons">
-                <span id="badge-status-${i}" class="badge-status" style="background: ${color}20; color: ${color}; border: 1px solid ${color}40;">${statusText}</span>
-                <select class="select-status-inline" onchange="alterarStatusRapido(${w.id}, ${i}, this.value)">
-                    <option value="ativo" ${w.status === 'ativo' ? 'selected' : ''}>Ativo</option>
-                    <option value="restrito" ${w.status === 'restrito' ? 'selected' : ''}>Restrito</option>
-                    <option value="banido" ${w.status === 'banido' ? 'selected' : ''}>Banido</option>
-                </select>
-                <button onclick="abrirEditarModal(${i})" class="btn-icon" style="color:#3b82f6;">📝</button>
-                <button onclick="removeWA(${w.id})" class="btn-icon" style="color:#ef4444;">✕</button>
-            </div>
-        </div>`;
-    });
-    document.getElementById("waList").innerHTML = html;
-}
-
-async function selectWA(id){
-    await supabaseClient.from('whatsapp_accounts')
-        .update({ selected: false })
-        .eq('operator_name', usuarioLogado)
-        .eq('company', empresaSelecionada);
-
-    await supabaseClient.from('whatsapp_accounts')
-        .update({ selected: true })
-        .eq('id', id);
-
-    showToast("Instância de disparo alterada.");
-    await syncLoadAll();
-}
-
-async function alterarStatusRapido(id, i, statusAlvo) {
-    if(statusAlvo === "restrito") {
-        abrirEditarModal(i);
-        document.getElementById("editModalStatus").value = "restrito";
-        toggleTempoRestritoVisibilidade();
-    } else {
-        await supabaseClient.from('whatsapp_accounts').update({ status: statusAlvo, restricted_until: null }).eq('id', id);
-        showToast("Status updated.");
-        await syncLoadAll();
-    }
-}
-
-function abrirEditarModal(i) {
-    contaEditandoIndex = i;
-    let conta = whatsappAccounts[i];
-    document.getElementById("editModalNumero").value = conta.number;
-    document.getElementById("editModalSent").value = conta.sent;
-    document.getElementById("editModalStatus").value = conta.status;
-    document.getElementById("editModalRole").value = conta.role || "preventive";
-    document.getElementById("editModalBrowser").value = conta.browser || "chrome";
-    toggleTempoRestritoVisibilidade();
-    
-    document.getElementById("btnSalvarEdicao").onclick = async function() {
-        let novoNumero = limparEValidarTelefone(document.getElementById("editModalNumero").value.trim());
-        let novosAcionamentos = parseInt(document.getElementById("editModalSent").value.trim());
-        let novoStatus = document.getElementById("editModalStatus").value;
-        let novaRole = document.getElementById("editModalRole").value;
-        let novoBrowser = document.getElementById("editModalBrowser").value;
-        
-        let restUntilValue = null;
-        if(novoStatus === "restrito") {
-            let inputTempo = document.getElementById("editModalTempo").value;
-            if(inputTempo) {
-                let milissegundosTotais = parseFloat(inputTempo) * 3600000;
-                if(milissegundosTotais > 0) restUntilValue = Date.now() + milissegundosTotais;
-            }
-        }
-        
-        await supabaseClient.from('whatsapp_accounts').update({
-            number: novoNumero,
-            sent: novosAcionamentos,
-            status: novoStatus,
-            role: novaRole,
-            browser: novoBrowser,
-            restricted_until: restUntilValue
-        }).eq('id', conta.id);
-
-        fecharModal("modalEditar");
-        showToast("Alterações salvas com sucesso!");
-        await syncLoadAll();
-    };
-    abrirModal("modalEditar");
-}
-
-async function removeWA(id){
-    if(!confirm("Remover esta conta?")) return;
-    await supabaseClient.from('whatsapp_accounts').delete().eq('id', id);
-    showToast("Instância desconectada.", "warning");
-    await syncLoadAll();
-}
-
-function mudarFiltroLista(statusAlvo) {
-    filtroStatusAtual = statusAlvo;
-    let abas = ['filterTabAll', 'filterTabPendente', 'filterTabEnviado', 'filterTabErro'];
-    abas.forEach(a => document.getElementById(a).classList.remove('active'));
-    
-    if(statusAlvo === 'todos') document.getElementById('filterTabAll').classList.add('active');
-    else if(statusAlvo === 'Pendente') document.getElementById('filterTabPendente').classList.add('active');
-    else if(statusAlvo === 'Enviado') document.getElementById('filterTabEnviado').classList.add('active');
-    else if(statusAlvo === 'Erro') document.getElementById('filterTabErro').classList.add('active');
-
-    filtrarEBuscarFila();
-}
-
-function filtrarEBuscarFila() {
-    let termoBusca = document.getElementById("buscaContatoInput").value.trim().toLowerCase();
-    let listaFiltrada = contatos;
-
-    if (filtroStatusAtual !== 'todos') {
-        listaFiltrada = listaFiltrada.filter(c => c.status === filtroStatusAtual);
-    }
-
-    if (termoBusca) {
-        listaFiltrada = listaFiltrada.filter(c => 
-            c.tel.toLowerCase().includes(termoBusca) || 
-            (c.script_texto && c.script_texto.toLowerCase().includes(termoBusca))
-        );
-    }
-
-    renderContatos(listaFiltrada);
-}
-
-function renderContatos(dadosFila) {
-    let html = "";
-    if (dadosFila.length === 0) {
-        html = `<div class="small" style="text-align:center; padding:30px; color:var(--text-muted);">Nenhum número correspondente encontrado.</div>`;
-        document.getElementById("lista").innerHTML = html;
-        return;
-    }
-
-    dadosFila.forEach((c) => {
-        let badgeColor = c.status === 'Enviado' ? 'var(--blue)' : c.status === 'Erro' ? 'var(--red)' : 'var(--text-muted)';
-        
-        let scriptOptions = listaScripts.map(s => `<option value="${s.id}" ${c.script_nome === s.nome ? 'selected' : ''}>${s.nome}</option>`).join('');
-
-        html += `
-        <div class="row" style="padding: 10px 6px;">
-            <div>
-                <span style="font-weight:600; color:#fff;">${c.tel}</span>
-                <div class="small" style="color: var(--purple); font-size:11px; margin-top:2px; display:flex; align-items:center; gap:4px;">
-                    📋 Script: 
-                    <select onchange="alterarScriptContatoFila(${c.id}, this.value)" style="width:auto; padding:2px; margin:0; font-size:11px; height:22px; background:rgba(0,0,0,0.4); border-radius:4px;">
-                        ${scriptOptions || '<option>Nenhum cadastrado</option>'}
-                    </select>
-                </div>
-            </div>
-            <div class="action-buttons">
-                <select class="select-status-inline" onchange="atualizarStatusContatoManual(${c.id}, this.value)" style="background-color: rgba(0,0,0,0.3); border-color: ${badgeColor}; color: #fff;">
-                    <option value="Pendente" ${c.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
-                    <option value="Enviado" ${c.status === 'Enviado' ? 'selected' : ''}>Enviado</option>
-                    <option value="Erro" ${c.status === 'Erro' ? 'selected' : ''}>Erro / Sem Whats</option>
-                </select>
-                <button onclick="removerContatoFila(${c.id})" class="btn-icon" style="color:#ef4444;">✕</button>
-            </div>
-        </div>`;
-    });
-    document.getElementById("lista").innerHTML = html;
-}
-
-async function alterarScriptContatoFila(contatoId, scriptId) {
-    let scriptObj = listaScripts.find(s => s.id == scriptId);
-    if (!scriptObj) return;
-
-    await supabaseClient.from('contacts_queue').update({
-        script_nome: scriptObj.nome,
-        script_texto: scriptObj.texto
-    }).eq('id', contatoId);
-
-    showToast("Script do contato updated.");
-    await syncLoadAll();
-}
-
-async function atualizarStatusContatoManual(id, novoStatus) {
-    await supabaseClient.from('contacts_queue').update({ status: novoStatus }).eq('id', id);
-    showToast(`Contato marcado como ${novoStatus}`);
-    await syncLoadAll();
-}
-
-async function salvarContatos(){
-    let scriptIdx = document.getElementById("modalSelectScriptDefinido").value;
-    if(scriptIdx === "") return showToast("Selecione um script válido.", "warning");
-    
-    let scriptVinculado = listaScripts[scriptIdx];
-    let rawInput = document.getElementById("telefonesInputModal").value;
-    let listagemNovos = rawInput.split("\n").map(x => x.trim()).filter(x => x);
-
-    let packageData = listagemNovos.map(linha => {
-        let partes = linha.split(";");
-        let numeroLimpo = limparEValidarTelefone(partes[0]);
-        let nomeCliente = partes[1] ? partes[1].trim() : "";
-        let textoCustomizado = scriptVinculado.texto.replace(/\{nome\}/gi, nomeCliente || "");
-
-        return {
-            operator_name: usuarioLogado,
-            company: empresaSelecionada,
-            tel: numeroLimpo,
-            status: "Pendente",
-            script_texto: textoCustomizado, 
-            script_nome: scriptVinculado.nome
-        };
-    });
-
-    await supabaseClient.from('contacts_queue').insert(packageData);
-    fecharModal("modalContatos");
-    showToast(`${packageData.length} Contatos adicionados.`);
-    await syncLoadAll();
-}
-
-async function limparContatos(){
-    if(!confirm("Remover permanentemente toda a fila?")) return;
-    await supabaseClient.from('contacts_queue')
-        .delete()
-        .eq('operator_name', usuarioLogado)
-        .eq('company', empresaSelecionada);
-
-    showToast("Fila esvaziada.", "info");
-    await syncLoadAll();
-}
-
-async function removerContatoFila(id){
-    await supabaseClient.from('contacts_queue').delete().eq('id', id);
-    showToast("Contato excluído da lista.");
-    await syncLoadAll();
-}
-
-/* SCRIPTS */
-function abrirModalScriptNovo() {
-    document.getElementById("tituloScriptModal").innerText = "Criar Novo Script";
-    document.getElementById("editScriptId").value = ""; 
-    document.getElementById("nomeScriptModal").value = "";
-    document.getElementById("textoScriptModal").value = "";
-    abrirModal("modalScript");
-}
-
-async function salvarScript(){
-    let idExistente = document.getElementById("editScriptId").value;
-    let nome = document.getElementById("nomeScriptModal").value.trim();
-    let texto = document.getElementById("textoScriptModal").value.trim();
-    
-    if (idExistente) {
-        await supabaseClient.from('message_scripts').update({ nome: nome, texto: texto }).eq('id', idExistente);
-    } else {
-        await supabaseClient.from('message_scripts').insert([{ 
-            operator_name: usuarioLogado, 
-            company: empresaSelecionada,
-            nome: nome, 
-            texto: texto, 
-            selected: listaScripts.length === 0 
-        }]);
-    }
-    fecharModal("modalScript");
-    showToast("Script atualizado com sucesso.");
-    await syncLoadAll();
-}
-
-function renderScripts() {
-    let html = "";
-    if (listaScripts.length === 0) {
-        document.getElementById("scriptsContainerList").innerHTML = "";
-        document.getElementById("preview").innerText = "Nenhum script.";
-        return;
-    }
-    listaScripts.forEach((s) => {
-        let base64 = btoa(unescape(encodeURIComponent(s.texto)));
-        html += `
-        <div class="row" style="padding: 8px 6px;">
-            <div style="display: flex; align-items: center; flex: 1; cursor: pointer;" onclick="selectScript(${s.id})">
-                <input type="radio" name="scriptSelect" class="radio-custom" ${s.selected ? "checked" : ""}>
-                <span style="font-weight: 600; color: ${s.selected ? 'var(--blue)' : '#fff'};">${s.nome}</span>
-            </div>
-            <div class="action-buttons">
-                <button onclick="prepararEdicaoScript(${s.id}, '${s.nome}', '${base64}')" class="btn-icon" style="color:#3b82f6;">📝</button>
-                <button onclick="removerScript(${s.id})" class="btn-icon" style="color:#ef4444;">✕</button>
-            </div>
-        </div>`;
-    });
-    document.getElementById("scriptsContainerList").innerHTML = html;
-    let ativo = listaScripts.find(x => x.selected);
-    document.getElementById("preview").innerText = ativo ? ativo.texto : "";
-}
-
-function prepararEdicaoScript(id, nome, b64) {
-    document.getElementById("tituloScriptModal").innerText = "Editar Script";
-    document.getElementById("editScriptId").value = id; 
-    document.getElementById("nomeScriptModal").value = nome;
-    document.getElementById("textoScriptModal").value = decodeURIComponent(escape(atob(b64)));
-    abrirModal("modalScript");
-}
-
-async function selectScript(id) {
-    await supabaseClient.from('message_scripts')
-        .update({ selected: false })
-        .eq('operator_name', usuarioLogado)
-        .eq('company', empresaSelecionada);
-
-    await supabaseClient.from('message_scripts').update({ selected: true }).eq('id', id);
-    await syncLoadAll();
-}
-
-async function removerScript(id){
-    if(!confirm("Deletar script?")) return;
-    await supabaseClient.from('message_scripts').delete().eq('id', id);
-    await syncLoadAll();
-}
-
-/* TIMER REGRESSIVO & DISPARO SEGURO */
-function iniciarContagemEnvio() {
-    let wa = whatsappAccounts.find(x => x.selected);
-    if(!wa || wa.status === "banido") return showToast("Verifique sua instância ativa antes de enviar.", "error");
-
-    let proximoContato = contatos.find(c => c.status === "Pendente");
-    if(!proximoContato) return showToast("Nenhum contato pendente na fila.", "warning");
-
-    cancelarEnvioRegressivo();
-    segundosRestantesRegressivo = 3;
-    document.getElementById("lblRegressivoSegundo").innerText = segundosRestantesRegressivo;
-    document.getElementById("timerContainerBanner").classList.remove("hidden");
-    document.getElementById("btnProximoChamado").disabled = true;
-
-    regressiveTimerPointer = setInterval(async () => {
-        segundosRestantesRegressivo--;
-        document.getElementById("lblRegressivoSegundo").innerText = segundosRestantesRegressivo;
-
-        if (segundosRestantesRegressivo <= 0) {
-            clearInterval(regressiveTimerPointer);
-            document.getElementById("timerContainerBanner").classList.add("hidden");
-            document.getElementById("btnProximoChamado").disabled = false;
-            await dispararProximoWhatsappEfetivo(wa, proximoContato);
-        }
-    }, 1000);
-}
-
-function cancelarEnvioRegressivo() {
-    if(regressiveTimerPointer) clearInterval(regressiveTimerPointer);
-    document.getElementById("timerContainerBanner").classList.add("hidden");
-    document.getElementById("btnProximoChamado").disabled = false;
-}
-
-async function dispararProximoWhatsappEfetivo(wa, contatoAlvo) {
-    await supabaseClient.from('contacts_queue').update({ status: 'Enviado' }).eq('id', contatoAlvo.id);
-    await supabaseClient.from('whatsapp_accounts').update({ sent: wa.sent + 1 }).eq('id', wa.id);
-
-    let urlDisparo = "https://web.whatsapp.com/send/?phone=" + contatoAlvo.tel + "&text=" + encodeURIComponent(contatoAlvo.script_texto);
-    
-    window.open(urlDisparo, "_blank");
-    
-    showToast("Enviado e atualizado automaticamente!");
-    await syncLoadAll();
-}
-
-/* MUSIC PLAYER AUDIOFLOW & CSS EQUALIZER */
-function mudarAbaMusica(aba) {
-    document.getElementById("tabBtnBusca").classList.toggle("active", aba === 'busca');
-    document.getElementById("tabBtnLink").classList.toggle("active", aba === 'link');
-    document.getElementById("abaMusicaBusca").classList.toggle("hidden", aba !== 'busca');
-    document.getElementById("abaMusicaLink").classList.toggle("hidden", aba !== 'link');
-}
-
-async function buscarMusicaPorNome() {
-    let termo = document.getElementById("inputBuscaNome").value.trim();
-    if (!termo) return;
     try {
-        let resposta = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(termo)}&entity=song&limit=4`);
-        let dados = await resposta.json();
-        let htmlResultados = "";
-        dados.results.forEach(faixa => {
-            htmlResultados += `
-            <div class="busca-item-resultado" style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--border-color);">
-                <div><strong>${faixa.trackName}</strong><br><span class="small">${faixa.artistName}</span></div>
-                <button class="green" onclick="ejecutarAudioSessao('${faixa.previewUrl}', '${faixa.trackName}', false)" style="margin:0; padding:4px 10px;">▶</button>
-            </div>`;
-        });
-        document.getElementById("containerResultadosBusca").innerHTML = htmlResultados;
-    } catch (e) { showToast("Falha ao buscar música.", "error"); }
-}
+        const { error } = await _supabase
+            .from('system_operators')
+            .insert([{ 
+                username: username, 
+                password: password, 
+                allowed_companies: allowedCompanies 
+            }]);
 
-function carregarLofiPadrao() { ejecutarAudioSessao("https://stream.zeno.fm/0r0xa792kwzuv", "Rádio Lofi Chill", false); }
-
-function carregarMusicaUrl() {
-    let url = document.getElementById("inputLinkMusica").value.trim();
-    if(url.includes("youtube.com") || url.includes("youtu.be")) {
-        let id = url.match(/(?:v=|\/embed\/|\/\d+\/|\/vi\/|youtu\.be\/|embeds\/)([^#\&\?]*)/)[1];
-        ejecutarAudioSessao(`https://www.youtube.com/embed/${id}?autoplay=1`, "YouTube Vídeo", true);
-    } else {
-        ejecutarAudioSessao(url, "Mídia Externa", false);
-    }
-}
-
-function ejecutarAudioSessao(urlAudio, nome, isIframe) {
-    let playerNativo = document.getElementById("playerAudioNativo");
-    document.getElementById("lblNomeMusicaTocando").innerText = nome;
-    document.getElementById("containerMiniPlayer").classList.remove("hidden");
-    document.getElementById("visualizerEqualizer").classList.add("playing");
-
-    if(isIframe) {
-        playerNativo.pause();
-        document.getElementById("wrapperAudioNativo").classList.add("hidden");
-        document.getElementById("wrapperAudioYoutube").classList.remove("hidden");
-        document.getElementById("playerYoutubeIframe").src = urlAudio;
-    } else {
-        document.getElementById("wrapperAudioYoutube").classList.add("hidden");
-        document.getElementById("wrapperAudioNativo").classList.remove("hidden");
-        playerNativo.src = urlAudio;
-        playerNativo.play().catch(() => {});
-    }
-    fecharModal("modalMusica");
-}
-
-function alternarPlayAudio() {
-    let p = document.getElementById("playerAudioNativo");
-    if (p.paused) { p.play(); document.getElementById("visualizerEqualizer").classList.add("playing"); } 
-    else { p.pause(); document.getElementById("visualizerEqualizer").classList.remove("playing"); }
-}
-
-function fecharMiniPlayer() {
-    document.getElementById("playerAudioNativo").pause();
-    document.getElementById("playerYoutubeIframe").src = "";
-    document.getElementById("containerMiniPlayer").classList.add("hidden");
-    document.getElementById("visualizerEqualizer").classList.remove("playing");
-}
-
-/* JOGO DA VELHA COMPLETO */
-
-let jogoAtActive = true;
-let tabuleiroSessao = ["", "", "", "", "", "", "", "", ""];
-
-const linhasVitoria = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-];
-
-function escolherJogadaIA() {
-    for (let l of linhasVitoria) {
-        let valores = l.map(i => tabuleiroSessao[i]);
-        if (valores.filter(v => v === "O").length === 2 && valores.includes("")) {
-            return l[valores.indexOf("")];
-        }
-    }
-
-    for (let l of linhasVitoria) {
-        let valores = l.map(i => tabuleiroSessao[i]);
-        if (valores.filter(v => v === "X").length === 2 && valores.includes("")) {
-            return l[valores.indexOf("")];
-        }
-    }
-
-    if (tabuleiroSessao[4] === "") return 4;
-
-    let cantos = [0,2,6,8].filter(i => tabuleiroSessao[i] === "");
-    if (cantos.length) {
-        return cantos[Math.floor(Math.random() * cantos.length)];
-    }
-
-    let laterais = [1,3,5,7].filter(i => tabuleiroSessao[i] === "");
-    if (laterais.length) {
-        return laterais[Math.floor(Math.random() * laterais.length)];
-    }
-
-    return null;
-}
-
-function jogada(index) {
-    if (tabuleiroSessao[index] !== "" || !jogoAtActive) return;
-
-    tabuleiroSessao[index] = "X";
-    document.querySelectorAll(".quadrado")[index].innerText = "X";
-
-    if (checarVitoria("X")) {
-        document.getElementById("statusJogo").innerText = "🎉 Vitória!";
-        jogoAtActive = false;
-        return;
-    }
-
-    if (!tabuleiroSessao.includes("")) {
-        document.getElementById("statusJogo").innerText = "🤝 Empate!";
-        jogoAtActive = false;
-        return;
-    }
-
-    document.getElementById("statusJogo").innerText = "🤖 IA pensando...";
-
-    let ia = escolherJogadaIA();
-
-    if (ia !== null) {
-        tabuleiroSessao[ia] = "O";
-        document.querySelectorAll(".quadrado")[ia].innerText = "O";
-
-        if (checarVitoria("O")) {
-            document.getElementById("statusJogo").innerText = "🤖 Fim de jogo para você.";
-            jogoAtActive = false;
+        if (error) {
+            if (error.code === "23505") { // Código para duplicidade no Postgres
+                showToast("Esse nome de usuário já está cadastrado!", "error");
+            } else {
+                throw error;
+            }
             return;
         }
 
-        if (!tabuleiroSessao.includes("")) {
-            document.getElementById("statusJogo").innerText = "🤝 Empate!";
-            jogoAtActive = false;
-            return;
-        }
+        showToast(`Operador ${username} cadastrado com sucesso!`, "success");
+        
+        // Reseta campos e recarrega os dados do painel
+        usernameInput.value = "";
+        passwordInput.value = "";
+        await loadAdminMetrics();
+
+    } catch (error) {
+        console.error(error);
+        showToast("Falha técnica ao tentar salvar o usuário.", "error");
     }
-
-    document.getElementById("statusJogo").innerText = "Sua vez! (Você é o X)";
 }
 
-function checarVitoria(s) {
-    return linhasVitoria.some(c =>
-        c.every(i => tabuleiroSessao[i] === s)
-    );
+// ==========================================
+// MOCK DA FUNÇÃO DE CARREGAMENTO GERAL
+// ==========================================
+async function syncLoadAll() {
+    console.log("Sincronizando dados de " + empresaSelecionada + " para " + usuarioLogado);
+    // Insira aqui sua lógica antiga de puxar dados (ex: contatos, scripts, etc.) do Supabase
 }
 
-function resetJogo() {
-    tabuleiroSessao.fill("");
-    jogoAtActive = true;
-    document.querySelectorAll(".quadrado").forEach(q => q.innerText = "");
-    document.getElementById("statusJogo").innerText = "Sua vez! (Você é o X)";
-}
-
-// LOOP REAL-TIME
+// ==========================================
+// LOOP REAL-TIME (SEGUNDOS DE RESTRIÇÃO)
+// ==========================================
 setInterval(async () => {
     if (!usuarioLogado) return;
     whatsappAccounts.forEach((w, i) => {
         let el = document.getElementById(`badge-status-${i}`);
         if (el && w.status === "restrito" && w.restricted_until) {
+            // Presume-se que formatRemainingTime esteja declarado em seu código original
             el.innerText = "restrito: " + formatRemainingTime(Number(w.restricted_until));
         }
     });
 }, 1000);
+
+// ==========================================
+// AUTO-LOGIN INTEGRADO AO BANCO DE DADOS
+// ==========================================
 window.addEventListener("DOMContentLoaded", async () => {
     let opSalvo = sessionStorage.getItem("_ss_op");
     let compSalva = sessionStorage.getItem("_ss_company");
@@ -790,23 +275,31 @@ window.addEventListener("DOMContentLoaded", async () => {
         usuarioLogado = atob(opSalvo);
         empresaSelecionada = atob(compSalva);
         
-        let empresasPermitidas = [];
-        if (usuarioLogado === "Levi") empresasPermitidas = ["Simplic"];
-        else if (usuarioLogado === "Mariana") empresasPermitidas = ["Simplic"];
-        else if (usuarioLogado === "Maria") empresasPermitidas = ["Simplic"];
-        else if (usuarioLogado === "Admin") empresasPermitidas = ["Simplic", "Loft"]; // Admin permitido em ambas
-        else if (usuarioLogado === "Fabio") empresasPermitidas = ["Loft"];
+        try {
+            // Busca o operador de forma dinâmica para validar se ele ainda existe/está ativo
+            const { data: usuario, error } = await _supabase
+                .from('system_operators')
+                .select('*')
+                .eq('username', usuarioLogado)
+                .single();
 
-        // Se a empresa salva no navegador não for permitida para este usuário, desloga
-        if (!empresasPermitidas.includes(empresaSelecionada)) {
+            // Se o login foi alterado ou ele perdeu a permissão, força deslogar
+            if (error || !usuario || !usuario.allowed_companies.includes(empresaSelecionada)) {
+                logout();
+                return;
+            }
+
+            checkAdminButton();
+
+            document.getElementById("lblUsuario").innerText = usuarioLogado;
+            document.getElementById("lblEmpresaAtiva").innerText = empresaSelecionada.toUpperCase() + " WHATSAPP";
+            document.getElementById("login").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+            await syncLoadAll();
+
+        } catch (err) {
+            console.error("Inconsistência no auto-login:", err);
             logout();
-            return;
         }
-
-        document.getElementById("lblUsuario").innerText = usuarioLogado;
-        document.getElementById("lblEmpresaAtiva").innerText = empresaSelecionada.toUpperCase() + " Whatsapp";
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-        await syncLoadAll();
     }
 });
