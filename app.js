@@ -89,16 +89,36 @@ async function login(){
 }
 
 async function carregarStatsAdm() {
+    // Busca todos os operadores
     const { data: ops } = await supabaseClient.from('users').select('username');
-    const { data: contacts } = await supabaseClient.from('contacts_queue').select('operator_name, status');
     
+    // Busca todos os contatos sem limite (range de 0 a 10000 para segurança)
+    const { data: contacts } = await supabaseClient
+        .from('contacts_queue')
+        .select('operator_name, status')
+        .range(0, 10000); 
+    
+    if (!ops || !contacts) return;
+
     let html = "";
     ops.forEach(op => {
+        // Filtra contando exatamente o que pertence a cada operador
         let naFila = contacts.filter(c => c.operator_name === op.username && c.status === 'Pendente').length;
         let acionados = contacts.filter(c => c.operator_name === op.username && c.status === 'Enviado').length;
-        html += `<div class="adm-stat-card"><strong>${op.username}</strong><span>Fila: ${naFila}</span><span>Acionados: ${acionados}</span></div>`;
+        
+        html += `
+            <div class="adm-stat-card">
+                <strong>${op.username}</strong>
+                <span>Fila: ${naFila}</span>
+                <span>Acionados: ${acionados}</span>
+            </div>
+        `;
     });
-    document.getElementById("admStats").innerHTML = html;
+    
+    const container = document.getElementById("admStats");
+    if (container) {
+        container.innerHTML = html;
+    }
 }
 
 async function login(){
