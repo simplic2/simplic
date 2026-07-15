@@ -8,6 +8,7 @@ let whatsappAccounts = [];
 let listaScripts = [];
 let contaEditandoIndex = null;
 let usuarioLogado = "";
+let empresaSelecionada = "";
 let previewTimerInterval = null;
 
 let filtroStatusAtual = 'todos';
@@ -63,64 +64,48 @@ function toggleTempoRestritoVisibilidade() {
     document.getElementById("containerTempoRestrito").classList.toggle("hidden", status !== "restrito");
 }
 
-// FUNÇÃO DE LOGIN ATUALIZADA E COMBINADA COM AS REGRAS DE EMPRESAS
 async function login(){
     let userField = document.getElementById("user");
     let passField = document.getElementById("pass");
+    let companyField = document.getElementById("loginCompany");
 
-    // Validação de segurança caso os elementos sumam do DOM
-    if (!userField || !passField) {
+    if (!userField || !passField || !companyField) {
         showToast("Erro crítico: Campos de login não encontrados.", "error");
         return;
     }
 
     let userDigitado = userField.value.trim();
     let passDigitadoAtual = passField.value.trim(); 
+    let empresaEscolhida = companyField.value;
 
-    // Identifica qual painel/empresa foi selecionado na tela de Login (Simplic ou Loft)
-    // Se o elemento não existir no seu HTML ainda, assume "simplic" como padrão.
-    const inputEmpresa = document.getElementById("empresa");
-    const empresaSelecionada = inputEmpresa ? inputEmpresa.value : "simplic";
-
-    let empresaDoUsuario = "";
-    letisAdmin = false;
-
-    // Definição das credenciais e suas respectivas empresas
     if (userDigitado === "Levi" && passDigitadoAtual === "2104") {
         usuarioLogado = "Levi";
-        empresaDoUsuario = "simplic"; // Levi pertence à Simplic
-    } else if (userDigitado === "Maria" && passDigitadoAtual === "duda2025") {
-        usuarioLogado = "Maria";
-        empresaDoUsuario = "simplic"; // Maria pertence à Simplic
     } else if (userDigitado === "Mariana" && passDigitadoAtual === "123mudar") {
         usuarioLogado = "Mariana";
-        empresaDoUsuario = "loft"; // Mariana pertence à Loft
-    } else if (userDigitado === "admin" && passDigitadoAtual === "admin123") {
-        usuarioLogado = "Administrador";
-        isAdmin = true; // Admin Global ignora travas
+    } else if (userDigitado === "Maria" && passDigitadoAtual === "duda2025") {
+        usuarioLogado = "Maria";
     } else {
         showToast("Login ou senha incorretos!", "error");
         return;
     } 
-
-    // BLOQUEIO DE ACESSO CRUZADO (Exceto para Administradores Globais)
-    if (!isAdmin && empresaDoUsuario !== empresaSelecionada) {
-        showToast(`Acesso negado! Este usuário pertence à ${empresaDoUsuario.toUpperCase()} e tentou entrar pela ${empresaSelecionada.toUpperCase()}.`, "error");
-        usuarioLogado = ""; // Limpa a sessão simulada
-        return;
-    }
     
+    empresaSelecionada = empresaEscolhida;
     sessionStorage.setItem("_ss_op", btoa(usuarioLogado));
+    sessionStorage.setItem("_ss_company", btoa(empresaSelecionada));
+    
     document.getElementById("lblUsuario").innerText = usuarioLogado;
+    document.getElementById("lblEmpresaAtiva").innerText = empresaSelecionada.toUpperCase() + " Whatsapp";
+    
     document.getElementById("login").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
     
-    showToast(`Bem-vindo de volta, ${usuarioLogado}!`, "success");
+    showToast(`Bem-vindo de volta à ${empresaSelecionada}, ${usuarioLogado}!`, "success");
     await syncLoadAll();
 }
 
 function logout() {
     usuarioLogado = "";
+    empresaSelecionada = "";
     sessionStorage.clear();
     fecharMiniPlayer();
     document.getElementById("app").classList.add("hidden");
@@ -129,15 +114,27 @@ function logout() {
 }
 
 async function syncLoadAll() {
-    if(!usuarioLogado) return;
+    if(!usuarioLogado || !empresaSelecionada) return;
     try {
-        let resWa = await supabaseClient.from('whatsapp_accounts').select('*').eq('operator_name', usuarioLogado).order('id', { ascending: true });
+        let resWa = await supabaseClient.from('whatsapp_accounts')
+            .select('*')
+            .eq('operator_name', usuarioLogado)
+            .eq('company', empresaSelecionada)
+            .order('id', { ascending: true });
         whatsappAccounts = resWa.data || [];
 
-        let resScr = await supabaseClient.from('message_scripts').select('*').eq('operator_name', usuarioLogado).order('id', { ascending: true });
+        let resScr = await supabaseClient.from('message_scripts')
+            .select('*')
+            .eq('operator_name', usuarioLogado)
+            .eq('company', empresaSelecionada)
+            .order('id', { ascending: true });
         listaScripts = resScr.data || [];
 
-        let resCon = await supabaseClient.from('contacts_queue').select('*').eq('operator_name', usuarioLogado).order('id', { ascending: true });
+        let resCon = await supabaseClient.from('contacts_queue')
+            .select('*')
+            .eq('operator_name', usuarioLogado)
+            .eq('company', empresaSelecionada)
+            .order('id', { ascending: true });
         contatos = resCon.data || [];
 
         renderKPIs();
@@ -179,6 +176,7 @@ async function addWA(){
 
     await supabaseClient.from('whatsapp_accounts').insert([{
         operator_name: usuarioLogado,
+        company: empresaSelecionada,
         number: num,
         sent: 0,
         selected: isFirst,
@@ -242,8 +240,15 @@ function renderWA(){
 }
 
 async function selectWA(id){
-    await supabaseClient.from('whatsapp_accounts').update({ selected: false }).eq('operator_name', usuarioLogado);
-    await supabaseClient.from('whatsapp_accounts').update({ selected: true }).eq('id', id);
+    await supabaseClient.from('whatsapp_accounts')
+        .update({ selected: false })
+        .eq('operator_name', usuarioLogado)
+        .eq('company', empresaSelecionada);
+
+    await supabaseClient.from('whatsapp_accounts')
+        .update({ selected: true })
+        .eq('id', id);
+
     showToast("Instância de disparo alterada.");
     await syncLoadAll();
 }
@@ -351,7 +356,6 @@ function renderContatos(dadosFila) {
     dadosFila.forEach((c) => {
         let badgeColor = c.status === 'Enviado' ? 'var(--blue)' : c.status === 'Erro' ? 'var(--red)' : 'var(--text-muted)';
         
-        // Geração do seletor inline de scripts para troca rápida
         let scriptOptions = listaScripts.map(s => `<option value="${s.id}" ${c.script_nome === s.nome ? 'selected' : ''}>${s.nome}</option>`).join('');
 
         html += `
@@ -378,7 +382,6 @@ function renderContatos(dadosFila) {
     document.getElementById("lista").innerHTML = html;
 }
 
-// TROCA DINÂMICA DE SCRIPT DO NÚMERO
 async function alterarScriptContatoFila(contatoId, scriptId) {
     let scriptObj = listaScripts.find(s => s.id == scriptId);
     if (!scriptObj) return;
@@ -414,6 +417,7 @@ async function salvarContatos(){
 
         return {
             operator_name: usuarioLogado,
+            company: empresaSelecionada,
             tel: numeroLimpo,
             status: "Pendente",
             script_texto: textoCustomizado, 
@@ -429,7 +433,11 @@ async function salvarContatos(){
 
 async function limparContatos(){
     if(!confirm("Remover permanentemente toda a fila?")) return;
-    await supabaseClient.from('contacts_queue').delete().eq('operator_name', usuarioLogado);
+    await supabaseClient.from('contacts_queue')
+        .delete()
+        .eq('operator_name', usuarioLogado)
+        .eq('company', empresaSelecionada);
+
     showToast("Fila esvaziada.", "info");
     await syncLoadAll();
 }
@@ -457,7 +465,13 @@ async function salvarScript(){
     if (idExistente) {
         await supabaseClient.from('message_scripts').update({ nome: nome, texto: texto }).eq('id', idExistente);
     } else {
-        await supabaseClient.from('message_scripts').insert([{ operator_name: usuarioLogado, nome: nome, texto: texto, selected: listaScripts.length === 0 }]);
+        await supabaseClient.from('message_scripts').insert([{ 
+            operator_name: usuarioLogado, 
+            company: empresaSelecionada,
+            nome: nome, 
+            texto: texto, 
+            selected: listaScripts.length === 0 
+        }]);
     }
     fecharModal("modalScript");
     showToast("Script atualizado com sucesso.");
@@ -499,7 +513,11 @@ function prepararEdicaoScript(id, nome, b64) {
 }
 
 async function selectScript(id) {
-    await supabaseClient.from('message_scripts').update({ selected: false }).eq('operator_name', usuarioLogado);
+    await supabaseClient.from('message_scripts')
+        .update({ selected: false })
+        .eq('operator_name', usuarioLogado)
+        .eq('company', empresaSelecionada);
+
     await supabaseClient.from('message_scripts').update({ selected: true }).eq('id', id);
     await syncLoadAll();
 }
@@ -543,16 +561,12 @@ function cancelarEnvioRegressivo() {
     document.getElementById("btnProximoChamado").disabled = false;
 }
 
-// ATUALIZAÇÃO AUTOMÁTICA E DISPARO SEM BLOQUEIO
 async function dispararProximoWhatsappEfetivo(wa, contatoAlvo) {
-    // Atualização imediata no Supabase antes de abrir o link para evitar duplicações
     await supabaseClient.from('contacts_queue').update({ status: 'Enviado' }).eq('id', contatoAlvo.id);
     await supabaseClient.from('whatsapp_accounts').update({ sent: wa.sent + 1 }).eq('id', wa.id);
 
-    // Formatação com a URL universal da API oficial de redirecionamento do WhatsApp Web
     let urlDisparo = "https://web.whatsapp.com/send/?phone=" + contatoAlvo.tel + "&text=" + encodeURIComponent(contatoAlvo.script_texto);
     
-    // Abertura forçada em nova aba sem herança de histórico para contornar restrições
     window.open(urlDisparo, "_blank");
     
     showToast("Enviado e atualizado automaticamente!");
@@ -642,7 +656,6 @@ const linhasVitoria = [
 ];
 
 function escolherJogadaIA() {
-    // IA tenta ganhar
     for (let l of linhasVitoria) {
         let valores = l.map(i => tabuleiroSessao[i]);
         if (valores.filter(v => v === "O").length === 2 && valores.includes("")) {
@@ -650,7 +663,6 @@ function escolherJogadaIA() {
         }
     }
 
-    // IA tenta bloquear jogador
     for (let l of linhasVitoria) {
         let valores = l.map(i => tabuleiroSessao[i]);
         if (valores.filter(v => v === "X").length === 2 && valores.includes("")) {
@@ -658,16 +670,13 @@ function escolherJogadaIA() {
         }
     }
 
-    // Centro
     if (tabuleiroSessao[4] === "") return 4;
 
-    // Cantos
     let cantos = [0,2,6,8].filter(i => tabuleiroSessao[i] === "");
     if (cantos.length) {
         return cantos[Math.floor(Math.random() * cantos.length)];
     }
 
-    // Laterais
     let laterais = [1,3,5,7].filter(i => tabuleiroSessao[i] === "");
     if (laterais.length) {
         return laterais[Math.floor(Math.random() * laterais.length)];
@@ -679,7 +688,6 @@ function escolherJogadaIA() {
 function jogada(index) {
     if (tabuleiroSessao[index] !== "" || !jogoAtActive) return;
 
-    // Jogador
     tabuleiroSessao[index] = "X";
     document.querySelectorAll(".quadrado")[index].innerText = "X";
 
@@ -697,7 +705,6 @@ function jogada(index) {
 
     document.getElementById("statusJogo").innerText = "🤖 IA pensando...";
 
-    // IA joga
     let ia = escolherJogadaIA();
 
     if (ia !== null) {
