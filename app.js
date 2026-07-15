@@ -78,27 +78,40 @@ async function login(){
     let passDigitadoAtual = passField.value.trim(); 
     let empresaEscolhida = companyField.value; // "Simplic" ou "Loft"
 
-    // 1. Definição estrita de qual usuário pertence a qual empresa
-    let empresaPermitida = "";
+    // =========================================================================
+    // CADASTRO DE USUÁRIOS, SENHAS E EMPRESAS PERMITIDAS (AGORA COM SUPORTE A ADM)
+    // =========================================================================
+    let empresasPermitidas = []; // Lista de empresas que o usuário pode acessar
 
     if (userDigitado === "Levi" && passDigitadoAtual === "2104") {
         usuarioLogado = "Levi";
-        empresaPermitida = "Simplic"; // Levi só pode acessar a Simplic
-    } else if (userDigitado === "Mariana" && passDigitadoAtual === "123mudar") {
+        empresasPermitidas = ["Simplic"]; // Apenas Simplic
+    } 
+    else if (userDigitado === "Mariana" && passDigitadoAtual === "123mudar") {
         usuarioLogado = "Mariana";
-        empresaPermitida = "Simplic";     // Mariana só pode acessar a Loft
-    } else if (userDigitado === "Maria" && passDigitadoAtual === "duda2025") {
+        empresasPermitidas = ["Simplic"]; // Apenas Simplic
+    } 
+    else if (userDigitado === "Maria" && passDigitadoAtual === "duda2025") {
         usuarioLogado = "Maria";
-        empresaPermitida = "Simplic"; // Maria só pode acessar a Simplic
-    } else {
+        empresasPermitidas = ["Simplic"]; // Apenas Simplic
+    }
+    // -------------------------------------------------------------------------
+    // 👑 NOVO USUÁRIO ADMINISTRADOR (Acessa Loft E Simplic)
+    // -------------------------------------------------------------------------
+    else if (userDigitado === "Admin" && passDigitadoAtual === "admin2026") {
+        usuarioLogado = "Admin";
+        empresasPermitidas = ["Simplic", "Loft"]; // Pode entrar em qualquer uma das duas!
+    }
+    // =========================================================================
+
+    else {
         showToast("Login ou senha incorretos!", "error");
         return;
     } 
     
-    // 2. Validação de segurança: Impede o acesso se a empresa selecionada for incorreta
-    if (empresaEscolhida !== empresaPermitida) {
+    // Validação de segurança: Verifica se a empresa que ele selecionou está na lista de permitidas dele
+    if (!empresasPermitidas.includes(empresaEscolhida)) {
         showToast(`Acesso negado! O usuário ${usuarioLogado} não tem permissão para acessar o painel da ${empresaEscolhida}.`, "error");
-        // Reseta as variáveis globais de segurança
         usuarioLogado = ""; 
         return;
     }
@@ -765,3 +778,30 @@ setInterval(async () => {
         }
     });
 }, 1000);
+window.addEventListener("DOMContentLoaded", async () => {
+    let opSalvo = sessionStorage.getItem("_ss_op");
+    let compSalva = sessionStorage.getItem("_ss_company");
+    
+    if (opSalvo && compSalva) {
+        usuarioLogado = atob(opSalvo);
+        empresaSelecionada = atob(compSalva);
+        
+        let empresasPermitidas = [];
+        if (usuarioLogado === "Levi") empresasPermitidas = ["Simplic"];
+        else if (usuarioLogado === "Mariana") empresasPermitidas = ["Simplic"];
+        else if (usuarioLogado === "Maria") empresasPermitidas = ["Simplic"];
+        else if (usuarioLogado === "Admin") empresasPermitidas = ["Simplic", "Loft"]; // Admin permitido em ambas
+
+        // Se a empresa salva no navegador não for permitida para este usuário, desloga
+        if (!empresasPermitidas.includes(empresaSelecionada)) {
+            logout();
+            return;
+        }
+
+        document.getElementById("lblUsuario").innerText = usuarioLogado;
+        document.getElementById("lblEmpresaAtiva").innerText = empresaSelecionada.toUpperCase() + " Whatsapp";
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        await syncLoadAll();
+    }
+});
