@@ -76,19 +76,34 @@ async function login(){
 
     let userDigitado = userField.value.trim();
     let passDigitadoAtual = passField.value.trim(); 
-    let empresaEscolhida = companyField.value;
+    let empresaEscolhida = companyField.value; // "Simplic" ou "Loft"
+
+    // 1. Definição estrita de qual usuário pertence a qual empresa
+    let empresaPermitida = "";
 
     if (userDigitado === "Levi" && passDigitadoAtual === "2104") {
         usuarioLogado = "Levi";
+        empresaPermitida = "Simplic"; // Levi só pode acessar a Simplic
     } else if (userDigitado === "Mariana" && passDigitadoAtual === "123mudar") {
         usuarioLogado = "Mariana";
+        empresaPermitida = "Loft";     // Mariana só pode acessar a Loft
     } else if (userDigitado === "Maria" && passDigitadoAtual === "duda2025") {
         usuarioLogado = "Maria";
+        empresaPermitida = "Simplic"; // Maria só pode acessar a Simplic
     } else {
         showToast("Login ou senha incorretos!", "error");
         return;
     } 
     
+    // 2. Validação de segurança: Impede o acesso se a empresa selecionada for incorreta
+    if (empresaEscolhida !== empresaPermitida) {
+        showToast(`Acesso negado! O usuário ${usuarioLogado} não tem permissão para acessar o painel da ${empresaEscolhida}.`, "error");
+        // Reseta as variáveis globais de segurança
+        usuarioLogado = ""; 
+        return;
+    }
+    
+    // Se passou na validação, autoriza o login normalmente
     empresaSelecionada = empresaEscolhida;
     sessionStorage.setItem("_ss_op", btoa(usuarioLogado));
     sessionStorage.setItem("_ss_company", btoa(empresaSelecionada));
