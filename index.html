@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Multimarcas - Simplic & Loft</title>
+    <!-- CSS Principal -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js para os Gráficos do Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="brand-simplic"> <!-- Classe inicial: simplic -->
+
+    <!-- Loader de Inicialização -->
+    <div id="loader" class="loader-container">
+        <div class="spinner"></div>
+        <p>Carregando painel premium...</p>
+    </div>
+
+    <div class="wrapper">
+        <!-- 📱 Sidebar Profissional -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <!-- A logo muda dinamicamente via CSS/JS baseado na classe do body -->
+                <div class="brand-logo"></div>
+            </div>
+            
+            <!-- Seletor de Marca Premium -->
+            <div class="brand-selector-container">
+                <label><i class="fa-solid fa-sliders"></i> Selecionar Parceiro</label>
+                <select id="brandSelector" class="brand-select">
+                    <option value="simplic">Simplic</option>
+                    <option value="loft">Loft</option>
+                </select>
+            </div>
+
+            <nav class="sidebar-menu">
+                <ul>
+                    <li class="active" data-target="dashboard-section">
+                        <a href="#"><i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span></a>
+                    </li>
+                    <li data-target="whatsapp-section">
+                        <a href="#"><i class="fa-brands fa-whatsapp"></i> <span>WhatsApp Hub</span></a>
+                    </li>
+                    <li data-target="settings-section">
+                        <a href="#"><i class="fa-solid fa-gear"></i> <span>Configurações</span></a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <header class="top-header">
+                <button id="toggleSidebar" class="toggle-btn"><i class="fa-solid fa-bars"></i></button>
+                <div class="user-profile">
+                    <span id="welcome-message">Olá, Operador <strong>Simplic</strong></span>
+                    <div class="avatar"><i class="fa-solid fa-user-tie"></i></div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                
+                <!-- 📊 Seção do Dashboard -->
+                <section id="dashboard-section" class="tab-content active">
+                    <div class="section-title">
+                        <h2>Visão Geral do Painel</h2>
+                        <p>Acompanhe os dados de performance em tempo real.</p>
+                    </div>
+
+                    <!-- Cards de KPI rápidos -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="kpi-data">
+                                <h3>Total de Leads</h3>
+                                <span class="kpi-value" id="kpi-leads">1,248</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon"><i class="fa-solid fa-comments"></i></div>
+                            <div class="kpi-data">
+                                <h3>Conversas Ativas</h3>
+                                <span class="kpi-value" id="kpi-chats">312</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="kpi-data">
+                                <h3>Conversão</h3>
+                                <span class="kpi-value" id="kpi-conversion">24.5%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Área de Gráficos -->
+                    <div class="charts-container">
+                        <div class="chart-box">
+                            <h3>Conversões Semanais</h3>
+                            <canvas id="conversionChart"></canvas>
+                        </div>
+                        <div class="chart-box">
+                            <h3>Origem dos Contatos</h3>
+                            <canvas id="sourceChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Seção WhatsApp -->
+                <section id="whatsapp-section" class="tab-content">
+                    <div class="section-title">
+                        <h2>Integração WhatsApp</h2>
+                        <p>Configure e envie mensagens automáticas para seus clientes.</p>
+                    </div>
+                    <div class="whatsapp-card">
+                        <div class="whatsapp-status">
+                            <span class="status-indicator online"></span>
+                            <span>API Simplic/Loft Conectada</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="wa-template">Modelo de Mensagem:</label>
+                            <textarea id="wa-template" placeholder="Olá! Temos uma proposta especial da [Marca] para você..."></textarea>
+                        </div>
+                        <button class="btn-whatsapp" id="btnTestWA">
+                            <i class="fa-brands fa-whatsapp"></i> Testar Envio
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Seção Configurações -->
+                <section id="settings-section" class="tab-content">
+                    <div class="section-title">
+                        <h2>Configurações Gerais</h2>
+                        <p>Gerencie preferências da sua conta e integrações.</p>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts de controle -->
+    <script src="js/dashboard.js"></script>
+    <script src="js/whatsapp.js"></script>
+    <script src="js/scripts.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
