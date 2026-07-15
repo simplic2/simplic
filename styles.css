@@ -1,4 +1,4 @@
-:root {
+root {
     --bg-main: #090d16;
     --bg-card: #111827;
     --bg-input: #1f2937;
@@ -54,7 +54,7 @@ body {
 .box p {
     color: var(--text-muted);
     font-size: 14px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 /* INPUTS, TEXTAREAS & SELECTS */
