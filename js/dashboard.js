@@ -1,36 +1,27 @@
-let currentCharts = {};
+let myChart = null;
 
-function initDashboardCharts(themePrimary, themeSecondary) {
-    // Destruir gráficos anteriores se existirem
-    if (currentCharts.conversion) currentCharts.conversion.destroy();
-    if (currentCharts.source) currentCharts.source.destroy();
+function renderChart(color1, color2) {
+    const ctx = document.getElementById('conversionChart');
+    if (!ctx) return;
 
-    const ctx1 = document.getElementById('conversionChart').getContext('2d');
-    currentCharts.conversion = new Chart(ctx1, {
-        type: 'line',
+    if (myChart) {
+        myChart.destroy();
+    }
+
+    myChart = new Chart(ctx, {
+        type: 'bar',
         data: {
-            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+            labels: ['Gerados', 'Enviados', 'Pagos'],
             datasets: [{
-                label: 'Sucesso',
-                data: [65, 78, 72, 89, 95, 45, 60],
-                borderColor: themePrimary,
-                tension: 0.3,
-                fill: false
+                label: 'Volume de Cobranças',
+                data: [120, 95, 74],
+                backgroundColor: [color1, color2, '#43b02a'],
+                borderWidth: 1
             }]
         },
-        options: { responsive: true }
-    });
-
-    const ctx2 = document.getElementById('sourceChart').getContext('2d');
-    currentCharts.source = new Chart(ctx2, {
-        type: 'doughnut',
-        data: {
-            labels: ['WhatsApp Direct', 'Anúncios', 'Orgânico'],
-            datasets: [{
-                data: [60, 25, 15],
-                backgroundColor: [themePrimary, themeSecondary, '#cbd5e0']
-            }]
-        },
-        options: { responsive: true }
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
     });
 }
