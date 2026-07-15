@@ -615,10 +615,15 @@ function alternarPlayAudio() {
 }
 
 function fecharMiniPlayer() {
-    document.getElementById("playerAudioNativo").pause();
-    document.getElementById("playerYoutubeIframe").src = "";
-    document.getElementById("containerMiniPlayer").classList.add("hidden");
-    document.getElementById("visualizerEqualizer").classList.remove("playing");
+    let player = document.getElementById("playerAudioNativo");
+    let iframe = document.getElementById("playerYoutubeIframe");
+    let visualizer = document.getElementById("visualizerEqualizer");
+    let container = document.getElementById("containerMiniPlayer");
+
+    if (player) player.pause();
+    if (iframe) iframe.src = "";
+    if (container) container.classList.add("hidden");
+    if (visualizer) visualizer.classList.remove("playing");
 }
 
 /* JOGO DA VELHA COMPLETO */
