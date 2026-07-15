@@ -113,9 +113,15 @@ async function cadastrarOperador() {
 function logout() {
     usuarioLogado = "";
     sessionStorage.clear();
-    fecharMiniPlayer();
+    
+    // Tenta fechar o player se ele existir
+    try { fecharMiniPlayer(); } catch(e) { console.log("Player não inicializado"); }
+    
     document.getElementById("app").classList.add("hidden");
+    // Esconde o painel admin caso tenha ficado visível
+    document.getElementById("painelAdm").classList.add("hidden");
     document.getElementById("login").classList.remove("hidden");
+    
     showToast("Sessão encerrada com sucesso.");
 }
 
@@ -141,12 +147,17 @@ async function syncLoadAll() {
 }
 
 function renderKPIs() {
-    document.getElementById("kpiTotalFila").innerText = contatos.length;
-    document.getElementById("kpiEnviados").innerText = contatos.filter(c => c.status === "Enviado").length;
-    document.getElementById("kpiAtivos").innerText = whatsappAccounts.filter(w => w.status === "ativo").length;
-    document.getElementById("kpiRestritos").innerText = whatsappAccounts.filter(w => w.status === "restrito" || w.status === "banido").length;
+    const kpiIds = ["kpiTotalFila", "kpiEnviados", "kpiAtivos", "kpiRestritos"];
+    kpiIds.forEach(id => {
+        let el = document.getElementById(id);
+        if (el) {
+            if (id === "kpiTotalFila") el.innerText = contatos.length;
+            if (id === "kpiEnviados") el.innerText = contatos.filter(c => c.status === "Enviado").length;
+            if (id === "kpiAtivos") el.innerText = whatsappAccounts.filter(w => w.status === "ativo").length;
+            if (id === "kpiRestritos") el.innerText = whatsappAccounts.filter(w => w.status === "restrito" || w.status === "banido").length;
+        }
+    });
 }
-
 function limparEValidarTelefone(tel) {
     let limpo = tel.replace(/\D/g, "");
     if (limpo.length === 11 && limpo.startsWith("9")) {
@@ -615,15 +626,18 @@ function alternarPlayAudio() {
 }
 
 function fecharMiniPlayer() {
-    let player = document.getElementById("playerAudioNativo");
-    let iframe = document.getElementById("playerYoutubeIframe");
-    let visualizer = document.getElementById("visualizerEqualizer");
-    let container = document.getElementById("containerMiniPlayer");
+    const player = document.getElementById("playerAudioNativo");
+    const iframe = document.getElementById("playerYoutubeIframe");
+    const container = document.getElementById("containerMiniPlayer");
+    const equalizer = document.getElementById("visualizerEqualizer");
 
-    if (player) player.pause();
+    if (player) {
+        player.pause();
+        player.src = "";
+    }
     if (iframe) iframe.src = "";
     if (container) container.classList.add("hidden");
-    if (visualizer) visualizer.classList.remove("playing");
+    if (equalizer) equalizer.classList.remove("playing");
 }
 
 /* JOGO DA VELHA COMPLETO */
