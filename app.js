@@ -65,20 +65,27 @@ function toggleTempoRestritoVisibilidade() {
 }
 
 // NOVO LOGIN UNIFICADO COM SISTEMA DE CARTEIRAS
+// Substitua sua função login atual por esta:
 async function login(){
-    let userDigitado = document.getElementById("user").value.trim();
-    let passDigitado = document.getElementById("pass").value.trim();
-    let carteira = document.getElementById("selectCarteira").value; // NOVO
+    let u = document.getElementById("user").value.trim();
+    let p = document.getElementById("pass").value.trim();
+    let c = document.getElementById("selectCarteira").value;
 
+    // Buscamos o usuário primeiro
     const { data: user, error } = await supabaseClient
         .from('users')
         .select('*')
-        .eq('username', userDigitado)
-        .eq('password', passDigitado)
-        .eq('carteira', carteira) // Valida a carteira
+        .eq('username', u)
+        .eq('password', p)
         .single();
 
-    if (!user) return showToast("Usuário, senha ou carteira incorretos!", "error");
+    if (!user) return showToast("Usuário ou senha inválidos!", "error");
+
+    // Se for admin, ele entra sem validar a carteira, ou você pode validar se quiser
+    // Se for operador comum, validamos a carteira
+    if (user.role !== 'admin' && user.carteira !== c) {
+        return showToast("Usuário não pertence a esta carteira!", "error");
+    }
 
     usuarioLogado = user.username;
     carteiraLogada = user.carteira;
@@ -87,21 +94,18 @@ async function login(){
     document.getElementById("login").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
 
-    // Lógica para esconder o jogo/música e mostrar painel adm SOMENTE se for admin
     if (user.role === 'admin') {
         document.getElementById("painelAdm").classList.remove("hidden");
+        // O Admin vê tudo por padrão
+        carregarStatsAdm('todos');
+        
+        // Esconde jogo e música para o Admin
         document.getElementById("linkJogo").style.display = "none";
         document.getElementById("sepJogo").style.display = "none";
         document.getElementById("linkMusica").style.display = "none";
         document.getElementById("sepMusica").style.display = "none";
-        carregarStatsAdm('todos');
     } else {
         document.getElementById("painelAdm").classList.add("hidden");
-        // Garante que o operador normal veja
-        document.getElementById("linkJogo").style.display = "inline";
-        document.getElementById("sepJogo").style.display = "inline";
-        document.getElementById("linkMusica").style.display = "inline";
-        document.getElementById("sepMusica").style.display = "inline";
     }
     
     await syncLoadAll();
