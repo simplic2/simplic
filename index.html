@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIMPLIC Whatsapp - Dashboard Premium</title>
+    <title>Multitenant Whatsapp - Dashboard Premium</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Stylesheet -->
@@ -17,21 +17,20 @@
     <!-- LOGIN AREA -->
     <div id="login" class="login">
         <div class="box">
-            <h2>SIMPLIC Whatsapp</h2>
+            <h2 id="loginTitle">SISTEMA Whatsapp</h2>
             <p>Painel de Controle Operacional</p>
-
-            <!-- Seletor Simplic / Loft (Adicionado para controle de acesso cruzado) -->
-            <div class="company-selector" style="display: flex; background: #1f2937; padding: 4px; border-radius: 8px; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.08);">
-                <button type="button" class="company-btn active-simplic" id="btn-select-simplic" onclick="selectCompany('simplic')" style="flex: 1; margin-top: 0; padding: 8px; font-size: 13px; background: #10b981; color: white; border-radius: 6px;">Simplic</button>
-                <button type="button" class="company-btn" id="btn-select-loft" onclick="selectCompany('loft')" style="flex: 1; margin-top: 0; padding: 8px; font-size: 13px; background: transparent; color: #9ca3af; border-radius: 6px;">Loft</button>
+            
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label class="small">Selecione a Empresa</label>
+                <select id="loginCompany" style="margin-top: 4px;">
+                    <option value="Simplic">SIMPLIC</option>
+                    <option value="Loft">LOFT</option>
+                </select>
             </div>
-
-            <!-- Input oculto para armazenar a empresa ativa no seletor -->
-            <input type="hidden" id="empresa" value="simplic">
 
             <input id="user" placeholder="Usuário">
             <input id="pass" type="password" placeholder="Senha">
-            <button id="submitBtn" class="green" style="width:100%; margin-top: 18px;" onclick="login()">Entrar no Sistema</button>
+            <button class="green" style="width:100%; margin-top: 18px;" onclick="login()">Entrar no Sistema</button>
         </div>
     </div>
 
@@ -41,7 +40,7 @@
 
             <!-- HEADER -->
             <div class="header-app">
-                <h1 id="headerTituloEmpresa">SIMPLIC</h1>
+                <h1 id="lblEmpresaAtiva">EMPRESA</h1>
                 <div class="user-badge">
                     <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
                     <span>Operador: <strong id="lblUsuario" style="color: var(--primary);">---</strong></span>
@@ -219,7 +218,7 @@
             <label class="small">Título / Identificação do Script</label>
             <input id="nomeScriptModal" placeholder="Ex: Cobrança Atraso 5 dias" style="margin-top:4px; margin-bottom:12px;">
             <label class="small">Mensagem de texto (Use "{nome}" para personalizar variáveis de envio)</label>
-            <textarea id="textoScriptModal" rows="7" placeholder="Olá {nome}, tudo bem? Vimos aqui..." style="margin-top:4px Papel de parede"></textarea>
+            <textarea id="textoScriptModal" rows="7" placeholder="Olá {nome}, tudo bem? Vimos aqui..." style="margin-top:4px;"></textarea>
             <div class="flex-group" style="margin-top: 20px;">
                 <button class="gray" onclick="fecharModal('modalScript')" style="flex:1;">Cancelar</button>
                 <button class="blue" onclick="salvarScript()" style="flex:1;">Salvar Script</button>
@@ -321,35 +320,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Script Simples para controlar a troca visual de botões de login -->
-    <script>
-        function selectCompany(company) {
-            const btnSimplic = document.getElementById('btn-select-simplic');
-            const btnLoft = document.getElementById('btn-select-loft');
-            const inputEmpresa = document.getElementById('empresa');
-            const headerTitulo = document.getElementById('headerTituloEmpresa');
-            const submitBtn = document.getElementById('submitBtn');
-
-            inputEmpresa.value = company;
-
-            if (company === 'simplic') {
-                btnSimplic.style.background = '#10b981';
-                btnSimplic.style.color = 'white';
-                btnLoft.style.background = 'transparent';
-                btnLoft.style.color = '#9ca3af';
-                submitBtn.className = 'green';
-                headerTitulo.innerText = "SIMPLIC";
-            } else {
-                btnLoft.style.background = '#ff5a5f';
-                btnLoft.style.color = 'white';
-                btnSimplic.style.background = 'transparent';
-                btnSimplic.style.color = '#9ca3af';
-                submitBtn.className = 'red';
-                headerTitulo.innerText = "LOFT";
-            }
-        }
-    </script>
 
     <!-- Core App Logic -->
     <script src="app.js"></script>
