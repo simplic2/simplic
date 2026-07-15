@@ -89,22 +89,17 @@ async function login(){
 }
 
 async function carregarStatsAdm() {
-    // Busca todos os operadores
+    // Busca dados de contatos sem limite de 100 linhas usando .select('*')
     const { data: ops } = await supabaseClient.from('users').select('username');
+    const { data: contacts } = await supabaseClient.from('contacts_queue').select('operator_name, status');
     
-    // Busca todos os contatos sem limite (range de 0 a 10000 para segurança)
-    const { data: contacts } = await supabaseClient
-        .from('contacts_queue')
-        .select('operator_name, status')
-        .range(0, 10000); 
-    
-    if (!ops || !contacts) return;
+    if (!ops) return;
 
     let html = "";
     ops.forEach(op => {
-        // Filtra contando exatamente o que pertence a cada operador
-        let naFila = contacts.filter(c => c.operator_name === op.username && c.status === 'Pendente').length;
-        let acionados = contacts.filter(c => c.operator_name === op.username && c.status === 'Enviado').length;
+        // Conta os itens filtrando pelo nome do operador
+        let naFila = contacts ? contacts.filter(c => c.operator_name === op.username && c.status === 'Pendente').length : 0;
+        let acionados = contacts ? contacts.filter(c => c.operator_name === op.username && c.status === 'Enviado').length : 0;
         
         html += `
             <div class="adm-stat-card">
@@ -116,9 +111,7 @@ async function carregarStatsAdm() {
     });
     
     const container = document.getElementById("admStats");
-    if (container) {
-        container.innerHTML = html;
-    }
+    if (container) container.innerHTML = html;
 }
 
 async function login(){
@@ -154,13 +147,16 @@ function logout() {
     usuarioLogado = "";
     sessionStorage.clear();
     
-    // Tenta fechar o player se ele existir
-    try { fecharMiniPlayer(); } catch(e) { console.log("Player não inicializado"); }
+    // Verificação de segurança para o Player
+    try { 
+        document.getElementById("playerAudioNativo").pause(); 
+        document.getElementById("containerMiniPlayer").classList.add("hidden");
+    } catch(e) {}
     
     document.getElementById("app").classList.add("hidden");
-    // Esconde o painel admin caso tenha ficado visível
-    document.getElementById("painelAdm").classList.add("hidden");
     document.getElementById("login").classList.remove("hidden");
+    // Esconde o painel admin ao sair
+    document.getElementById("painelAdm").classList.add("hidden");
     
     showToast("Sessão encerrada com sucesso.");
 }
@@ -181,6 +177,12 @@ async function syncLoadAll() {
         renderWA();
         renderScripts();
         filtrarEBuscarFila();
+
+        // Verifica se o painel administrativo está visível antes de atualizar as stats
+        let painel = document.getElementById("painelAdm");
+        if (painel && !painel.classList.contains("hidden")) {
+            carregarStatsAdm();
+        }
     } catch (error) {
         console.error("Erro na sincronização:", error);
     }
