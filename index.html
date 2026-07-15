@@ -67,10 +67,10 @@
         </header>
 
         <!-- GRID PRINCIPAL DE OPERAÇÕES -->
-        <div class="grid">
+        <div class="grid" id="main-grid">
             
             <!-- COLUNA ESQUERDA: ENVIOS E FILAS -->
-            <div class="card">
+            <div class="card" id="left-column">
                 <h3>🚀 Acionamentos e Envios</h3>
                 <div class="filter-tabs">
                     <button class="filter-btn active">Todos</button>
@@ -89,8 +89,8 @@
                 </div>
             </div>
 
-            <!-- COLUNA DIREITA: CONFIGURAÇÕES E SCRIPTS -->
-            <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- COLUNA DIREITA: CONFIGURAÇÕES, SCRIPTS E MIDIA (OCULTADA AUTOMATICAMENTE PARA O ADMIN) -->
+            <div style="display: flex; flex-direction: column; gap: 20px;" id="right-column">
                 
                 <!-- CARD DE CONFIGURAÇÃO DO CANAL -->
                 <div class="card">
@@ -110,8 +110,8 @@
                     </div>
                 </div>
 
-                <!-- CARD DO PLAYER DE MÚSICA -->
-                <div class="card">
+                <!-- CARD DO PLAYER DE MÚSICA (OCULTO PARA ADMIN) -->
+                <div class="card" id="card-player">
                     <h3>🎵 Player de Música</h3>
                     <input type="text" placeholder="Cole a URL do YouTube ou Deezer...">
                     <button class="blue" style="width: 100%;">Tocar Mídia</button>
