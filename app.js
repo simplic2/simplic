@@ -319,14 +319,18 @@ function abrirEditarModal(i) {
         let novaRole = document.getElementById("editModalRole").value;
         let novoBrowser = document.getElementById("editModalBrowser").value;
         
-        let restUntilValue = null;
-        if(novoStatus === "restrito") {
-            let inputTempo = document.getElementById("editModalTempo").value;
-            if(inputTempo) {
-                let milissegundosTotais = parseFloat(inputTempo) * 3600000;
-                if(milissegundosTotais > 0) restUntilValue = Date.now() + milissegundosTotais;
-            }
-        }
+        // Dentro da sua função salvarEdicao (dentro de abrirEditarModal)
+let restUntilValue = null;
+if(novoStatus === "restrito") {
+    let inputTempo = document.getElementById("editModalTempo").value;
+    let unidade = document.getElementById("editModalUnidade").value; // Precisamos criar esse seletor
+    
+    if(inputTempo > 0) {
+        // Se unidade for 'horas', multiplica por 1 hora. Se for 'dias', multiplica por 24 horas.
+        let multiplicador = unidade === 'dias' ? 86400000 : 3600000;
+        restUntilValue = Date.now() + (parseFloat(inputTempo) * multiplicador);
+    }
+}
         
         await supabaseClient.from('whatsapp_accounts').update({
             number: novoNumero,
