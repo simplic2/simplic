@@ -8,6 +8,7 @@ let whatsappAccounts = [];
 let listaScripts = [];
 let contaEditandoIndex = null;
 let usuarioLogado = "";
+let carteiraLogada = ""; // NOVO
 let previewTimerInterval = null;
 
 let filtroStatusAtual = 'todos';
@@ -63,102 +64,93 @@ function toggleTempoRestritoVisibilidade() {
     document.getElementById("containerTempoRestrito").classList.toggle("hidden", status !== "restrito");
 }
 
-// Substitua o login antigo por este
+// NOVO LOGIN UNIFICADO COM SISTEMA DE CARTEIRAS
 async function login(){
     let userDigitado = document.getElementById("user").value.trim();
     let passDigitado = document.getElementById("pass").value.trim();
+    let carteira = document.getElementById("selectCarteira").value; // NOVO
 
     const { data: user, error } = await supabaseClient
         .from('users')
         .select('*')
         .eq('username', userDigitado)
         .eq('password', passDigitado)
+        .eq('carteira', carteira) // Valida a carteira
         .single();
 
-    if (!user) return showToast("Usuário ou senha inválidos!", "error");
+    if (!user) return showToast("Usuário, senha ou carteira incorretos!", "error");
 
     usuarioLogado = user.username;
-    document.getElementById("login").classList.add("hidden");
-    document.getElementById("app").classList.remove("hidden");
-
-    if (user.role === 'admin') {
-        document.getElementById("painelAdm").classList.remove("hidden");
-        carregarStatsAdm();
-    }
-    await syncLoadAll();
-}
-
-async function carregarStatsAdm() {
-    // Busca dados de contatos sem limite de 100 linhas usando .select('*')
-    const { data: ops } = await supabaseClient.from('users').select('username');
-    const { data: contacts } = await supabaseClient.from('contacts_queue').select('operator_name, status');
+    carteiraLogada = user.carteira;
     
-    if (!ops) return;
-
-    let html = "";
-    ops.forEach(op => {
-        // Conta os itens filtrando pelo nome do operador
-        let naFila = contacts ? contacts.filter(c => c.operator_name === op.username && c.status === 'Pendente').length : 0;
-        let acionados = contacts ? contacts.filter(c => c.operator_name === op.username && c.status === 'Enviado').length : 0;
-        
-        html += `
-            <div class="adm-stat-card">
-                <strong>${op.username}</strong>
-                <span>Fila: ${naFila}</span>
-                <span>Acionados: ${acionados}</span>
-            </div>
-        `;
-    });
-    
-    const container = document.getElementById("admStats");
-    if (container) container.innerHTML = html;
-}
-
-async function login(){
-    let userDigitado = document.getElementById("user").value.trim();
-    let passDigitado = document.getElementById("pass").value.trim();
-
-    const { data: user, error } = await supabaseClient
-        .from('users')
-        .select('*')
-        .eq('username', userDigitado)
-        .eq('password', passDigitado)
-        .single();
-
-    if (!user) return showToast("Usuário ou senha inválidos!", "error");
-
-    usuarioLogado = user.username;
     document.getElementById("lblUsuario").innerText = usuarioLogado;
     document.getElementById("login").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
 
-    // Mostra o painel admin apenas se for admin
+    // Lógica para esconder o jogo/música e mostrar painel adm SOMENTE se for admin
     if (user.role === 'admin') {
         document.getElementById("painelAdm").classList.remove("hidden");
-        carregarStatsAdm();
+        document.getElementById("linkJogo").style.display = "none";
+        document.getElementById("sepJogo").style.display = "none";
+        document.getElementById("linkMusica").style.display = "none";
+        document.getElementById("sepMusica").style.display = "none";
+        carregarStatsAdm('todos');
     } else {
         document.getElementById("painelAdm").classList.add("hidden");
+        // Garante que o operador normal veja
+        document.getElementById("linkJogo").style.display = "inline";
+        document.getElementById("sepJogo").style.display = "inline";
+        document.getElementById("linkMusica").style.display = "inline";
+        document.getElementById("sepMusica").style.display = "inline";
     }
     
     await syncLoadAll();
 }
 
 function logout() {
-    usuarioLogado = "";
-    sessionStorage.clear();
+    location.reload(); // Atualiza a página inteira para limpar tudo e evitar erros no player
+}
+
+async function cadastrarOperador() {
+    let u = document.getElementById("newOpUser").value;
+    let p = document.getElementById("newOpPass").value;
+    let c = document.getElementById("newOpCarteira").value;
     
-    // Verificação de segurança para o Player
-    try { 
-        document.getElementById("playerAudioNativo").pause(); 
-        document.getElementById("containerMiniPlayer").classList.add("hidden");
-    } catch(e) {}
+    if(!u || !p) return showToast("Preencha usuário e senha", "error");
+
+    await supabaseClient.from('users').insert([{ username: u, password: p, carteira: c, role: 'operador' }]);
+    showToast("Operador criado com sucesso!", "success");
     
-    document.getElementById("app").classList.add("hidden");
-    document.getElementById("login").classList.remove("hidden");
-    // Esconde o painel admin ao sair
-    document.getElementById("painelAdm").classList.add("hidden");
+    document.getElementById("newOpUser").value = "";
+    document.getElementById("newOpPass").value = "";
+    carregarStatsAdm('todos');
+}
+
+// ESTATÍSTICAS COM FILTRO DE CARTEIRAS E CONTAGEM DE ACIONAMENTOS
+async function carregarStatsAdm(filtro) {
+    const { data: users } = await supabaseClient.from('users').select('*');
+    const { data: contacts } = await supabaseClient.from('contacts_queue').select('operator_name, status');
     
-    showToast("Sessão encerrada com sucesso.");
+    let container = document.getElementById("admStats");
+    if (!container || !users) return;
+
+    let html = "";
+    let operadoresFiltrados = users.filter(u => filtro === 'todos' || u.carteira === filtro);
+    
+    operadoresFiltrados.forEach(op => {
+        let acionadosDia = contacts ? contacts.filter(c => c.operator_name === op.username && c.status === 'Enviado').length : 0;
+        let naFila = contacts ? contacts.filter(c => c.operator_name === op.username && c.status === 'Pendente').length : 0;
+        
+        html += `
+            <div class="adm-stat-card">
+                <strong>${op.username}</strong>
+                <span style="color:#a0aec0; margin-bottom: 5px;">Carteira: ${op.carteira || 'Indefinida'}</span>
+                <span>Fila: ${naFila}</span>
+                <span style="color:var(--blue); font-weight:bold; margin-top:4px;">Acionados: ${acionadosDia}</span>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
 }
 
 async function syncLoadAll() {
@@ -178,10 +170,11 @@ async function syncLoadAll() {
         renderScripts();
         filtrarEBuscarFila();
 
-        // Verifica se o painel administrativo está visível antes de atualizar as stats
+        // Atualiza stats de admin em tempo real
         let painel = document.getElementById("painelAdm");
         if (painel && !painel.classList.contains("hidden")) {
-            carregarStatsAdm();
+            // Mantém o filtro atual verificando qual botão foi o último clicado (gambiarra rápida pegando valor padrão 'todos')
+            carregarStatsAdm('todos');
         }
     } catch (error) {
         console.error("Erro na sincronização:", error);
@@ -200,6 +193,7 @@ function renderKPIs() {
         }
     });
 }
+
 function limparEValidarTelefone(tel) {
     let limpo = tel.replace(/\D/g, "");
     if (limpo.length === 11 && limpo.startsWith("9")) {
@@ -589,14 +583,11 @@ function cancelarEnvioRegressivo() {
 
 // ATUALIZAÇÃO AUTOMÁTICA E DISPARO SEM BLOQUEIO
 async function dispararProximoWhatsappEfetivo(wa, contatoAlvo) {
-    // Atualização imediata no Supabase antes de abrir o link para evitar duplicações
     await supabaseClient.from('contacts_queue').update({ status: 'Enviado' }).eq('id', contatoAlvo.id);
     await supabaseClient.from('whatsapp_accounts').update({ sent: wa.sent + 1 }).eq('id', wa.id);
 
-    // Formatação com a URL universal da API oficial de redirecionamento do WhatsApp Web
     let urlDisparo = "https://web.whatsapp.com/send/?phone=" + contatoAlvo.tel + "&text=" + encodeURIComponent(contatoAlvo.script_texto);
     
-    // Abertura forçada em nova aba sem herança de histórico para contornar restrições
     window.open(urlDisparo, "_blank");
     
     showToast("Enviado e atualizado automaticamente!");
@@ -694,44 +685,29 @@ const linhasVitoria = [
 ];
 
 function escolherJogadaIA() {
-    // IA tenta ganhar
     for (let l of linhasVitoria) {
         let valores = l.map(i => tabuleiroSessao[i]);
         if (valores.filter(v => v === "O").length === 2 && valores.includes("")) {
             return l[valores.indexOf("")];
         }
     }
-
-    // IA bloqueia jogador
     for (let l of linhasVitoria) {
         let valores = l.map(i => tabuleiroSessao[i]);
         if (valores.filter(v => v === "X").length === 2 && valores.includes("")) {
             return l[valores.indexOf("")];
         }
     }
-
-    // Centro
     if (tabuleiroSessao[4] === "") return 4;
-
-    // Cantos
     let cantos = [0,2,6,8].filter(i => tabuleiroSessao[i] === "");
-    if (cantos.length) {
-        return cantos[Math.floor(Math.random() * cantos.length)];
-    }
-
-    // Laterais
+    if (cantos.length) return cantos[Math.floor(Math.random() * cantos.length)];
     let laterais = [1,3,5,7].filter(i => tabuleiroSessao[i] === "");
-    if (laterais.length) {
-        return laterais[Math.floor(Math.random() * laterais.length)];
-    }
-
+    if (laterais.length) return laterais[Math.floor(Math.random() * laterais.length)];
     return null;
 }
 
 function jogada(index) {
     if (tabuleiroSessao[index] !== "" || !jogoAtActive) return;
 
-    // Jogador
     tabuleiroSessao[index] = "X";
     document.querySelectorAll(".quadrado")[index].innerText = "X";
 
@@ -749,7 +725,6 @@ function jogada(index) {
 
     document.getElementById("statusJogo").innerText = "🤖 IA pensando...";
 
-    // IA joga
     let ia = escolherJogadaIA();
 
     if (ia !== null) {
@@ -789,7 +764,7 @@ function resetJogo() {
 setInterval(async () => {
     if (!usuarioLogado) return;
     whatsappAccounts.forEach((w, i) => {
-        let el = document.getElementById(`badge-status-\${i}`);
+        let el = document.getElementById(`badge-status-${i}`);
         if (el && w.status === "restrito" && w.restricted_until) {
             el.innerText = "restrito: " + formatRemainingTime(Number(w.restricted_until));
         }
