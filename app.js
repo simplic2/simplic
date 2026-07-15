@@ -1,18 +1,18 @@
 // ==========================================
-// CONFIGURAÇÕES SUPABASE
+// CONFIGURAÇÕES SUPABASE (MANTENHA SUAS CHAVES AQUI)
 // ==========================================
-const SUPABASE_URL = "SUA_URL_DO_SUPABASE_AQUI";
-const SUPABASE_KEY = "SUA_CHAVE_ANON_DO_SUPABASE_AQUI";
+const SUPABASE_URL = "SUA_URL_DO_SUPABASE_AQUI"; 
+const SUPABASE_KEY = "SUA_CHAVE_ANON_DO_SUPABASE_AQUI"; 
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // VARIÁVEIS GLOBAIS DE ESTADO
 let usuarioLogado = "";
 let empresaSelecionada = "";
-let whatsappAccounts = []; // Exemplo para o setInterval do real-time
+let whatsappAccounts = []; 
 
 // ==========================================
-// TOAST NOTIFICATIONS
+// TOAST NOTIFICATIONS (ALERTAS FLUTUANTES)
 // ==========================================
 function showToast(message, type = "success") {
     const container = document.getElementById("toast-container");
@@ -80,8 +80,8 @@ async function login(){
         sessionStorage.setItem("_ss_op", btoa(usuarioLogado));
         sessionStorage.setItem("_ss_company", btoa(empresaSelecionada));
 
-        // Configura visibilidade do botão de Admin
-        checkAdminButton();
+        // Aplica as mudanças exclusivas de layout para o Admin
+        checkAdminLayout();
 
         document.getElementById("lblUsuario").innerText = usuarioLogado;
         document.getElementById("lblEmpresaAtiva").innerText = empresaSelecionada.toUpperCase() + " WHATSAPP";
@@ -108,22 +108,36 @@ function logout() {
     
     document.getElementById("login").classList.remove("hidden");
     document.getElementById("app").classList.add("hidden");
-    document.getElementById("btnAdminPanel").classList.add("hidden");
     
+    // Reseta o layout do grid ao estado padrão
+    const mainGrid = document.getElementById("main-grid");
+    const rightColumn = document.getElementById("right-column");
+    if (mainGrid) mainGrid.style.gridTemplateColumns = "1.2fr 0.8fr";
+    if (rightColumn) rightColumn.classList.remove("hidden");
+
     showToast("Sessão encerrada com sucesso.", "info");
 }
 
 // ==========================================
-// VISIBILIDADE DO PAINEL ADMIN
+// ADAPTAÇÃO DA INTERFACE PARA ADMIN / OPERADOR
 // ==========================================
-function checkAdminButton() {
-    let btnAdmin = document.getElementById("btnAdminPanel");
-    if (btnAdmin) {
-        if (usuarioLogado === "Admin") {
-            btnAdmin.classList.remove("hidden");
-        } else {
-            btnAdmin.classList.add("hidden");
-        }
+function checkAdminLayout() {
+    const btnAdmin = document.getElementById("btnAdminPanel");
+    const rightColumn = document.getElementById("right-column");
+    const mainGrid = document.getElementById("main-grid");
+
+    if (usuarioLogado === "Admin") {
+        // Mostra o botão do Painel Admin
+        if (btnAdmin) btnAdmin.classList.remove("hidden");
+        
+        // INTERFACE DO ADMIN: Oculta toda a coluna de mídias/player e expande os envios
+        if (rightColumn) rightColumn.classList.add("hidden");
+        if (mainGrid) mainGrid.style.gridTemplateColumns = "1fr";
+    } else {
+        // INTERFACE DO OPERADOR: Esconde botão de admin e exibe a coluna operacional
+        if (btnAdmin) btnAdmin.classList.add("hidden");
+        if (rightColumn) rightColumn.classList.remove("hidden");
+        if (mainGrid) mainGrid.style.gridTemplateColumns = "1.2fr 0.8fr";
     }
 }
 
@@ -161,7 +175,7 @@ async function loadAdminMetrics() {
                 .select('*', { count: 'exact', head: true })
                 .eq('operator_name', op.username);
 
-            // Filtra acionamentos feitos hoje (a partir de 00:00h)
+            // Filtra acionamentos feitos hoje (a partir de 00:00h de hoje)
             let hoje = new Date();
             hoje.setHours(0,0,0,0);
 
@@ -174,7 +188,7 @@ async function loadAdminMetrics() {
 
             let empresasTexto = op.allowed_companies.join(", ");
 
-            // Se for Administrador Geral, dá destaque estético na tabela
+            // Destaque estético se for o Administrador Geral
             let opBadgeStyle = op.username === "Admin" ? "color: var(--orange); font-weight: 800;" : "font-weight: bold;";
 
             html += `
@@ -221,7 +235,7 @@ async function createUser(event) {
             }]);
 
         if (error) {
-            if (error.code === "23505") { // Código para duplicidade no Postgres
+            if (error.code === "23505") { // Código para duplicidade de chave (username único) no Postgres
                 showToast("Esse nome de usuário já está cadastrado!", "error");
             } else {
                 throw error;
@@ -231,7 +245,7 @@ async function createUser(event) {
 
         showToast(`Operador ${username} cadastrado com sucesso!`, "success");
         
-        // Reseta campos e recarrega os dados do painel
+        // Reseta campos e recarrega a tabela de métricas
         usernameInput.value = "";
         passwordInput.value = "";
         await loadAdminMetrics();
@@ -243,26 +257,12 @@ async function createUser(event) {
 }
 
 // ==========================================
-// MOCK DA FUNÇÃO DE CARREGAMENTO GERAL
+// CARREGAMENTO DOS DADOS OPERACIONAIS (SUA LÓGICA ANTIGA DE ENVIOS)
 // ==========================================
 async function syncLoadAll() {
     console.log("Sincronizando dados de " + empresaSelecionada + " para " + usuarioLogado);
-    // Insira aqui sua lógica antiga de puxar dados (ex: contatos, scripts, etc.) do Supabase
+    // Insira ou mantenha aqui os seus códigos que buscam os contatos ativos na tela operacional
 }
-
-// ==========================================
-// LOOP REAL-TIME (SEGUNDOS DE RESTRIÇÃO)
-// ==========================================
-setInterval(async () => {
-    if (!usuarioLogado) return;
-    whatsappAccounts.forEach((w, i) => {
-        let el = document.getElementById(`badge-status-${i}`);
-        if (el && w.status === "restrito" && w.restricted_until) {
-            // Presume-se que formatRemainingTime esteja declarado em seu código original
-            el.innerText = "restrito: " + formatRemainingTime(Number(w.restricted_until));
-        }
-    });
-}, 1000);
 
 // ==========================================
 // AUTO-LOGIN INTEGRADO AO BANCO DE DADOS
@@ -276,20 +276,20 @@ window.addEventListener("DOMContentLoaded", async () => {
         empresaSelecionada = atob(compSalva);
         
         try {
-            // Busca o operador de forma dinâmica para validar se ele ainda existe/está ativo
+            // Valida de forma segura se o operador ainda existe e possui o escopo adequado
             const { data: usuario, error } = await _supabase
                 .from('system_operators')
                 .select('*')
                 .eq('username', usuarioLogado)
                 .single();
 
-            // Se o login foi alterado ou ele perdeu a permissão, força deslogar
             if (error || !usuario || !usuario.allowed_companies.includes(empresaSelecionada)) {
                 logout();
                 return;
             }
 
-            checkAdminButton();
+            // Aplica interface conforme perfil
+            checkAdminLayout();
 
             document.getElementById("lblUsuario").innerText = usuarioLogado;
             document.getElementById("lblEmpresaAtiva").innerText = empresaSelecionada.toUpperCase() + " WHATSAPP";
