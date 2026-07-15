@@ -63,41 +63,51 @@ function toggleTempoRestritoVisibilidade() {
     document.getElementById("containerTempoRestrito").classList.toggle("hidden", status !== "restrito");
 }
 
+// Substitua o login antigo por este
 async function login(){
-    let userField = document.getElementById("user");
-    let passField = document.getElementById("pass");
+    let userDigitado = document.getElementById("user").value.trim();
+    let passDigitado = document.getElementById("pass").value.trim();
 
-    // Validação de segurança caso os elementos sumam do DOM
-    if (!userField || !passField) {
-        showToast("Erro crítico: Campos de login não encontrados.", "error");
-        return;
-    }
+    const { data: user, error } = await supabaseClient
+        .from('users')
+        .select('*')
+        .eq('username', userDigitado)
+        .eq('password', passDigitado)
+        .single();
 
-    let userDigitado = userField.value.trim();
-    let passDigitadoAtual = passField.value.trim(); 
+    if (!user) return showToast("Usuário ou senha inválidos!", "error");
 
-    if (userDigitado === "Levi" && passDigitadoAtual === "2104") {
-        usuarioLogado = "Levi";
-    } else if (userDigitado === "Mariana" && passDigitadoAtual === "123mudar") {
-        usuarioLogado = "Mariana";
-    } else if (userDigitado === "Maria" && passDigitadoAtual === "duda2025") {
-        usuarioLogado = "Maria";
-        } else if (userDigitado === "Jeferson" && passDigitadoAtual === "1234") {
-        usuarioLogado = "Jeferson";
-        } else if (userDigitado === "Supremorsrs" && passDigitadoAtual === "1234") {
-        usuarioLogado = "Supremorsrs";
-    } else {
-        showToast("Login ou senha incorretos!", "error");
-        return;
-    } 
-    
-    sessionStorage.setItem("_ss_op", btoa(usuarioLogado));
-    document.getElementById("lblUsuario").innerText = usuarioLogado;
+    usuarioLogado = user.username;
     document.getElementById("login").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
-    
-    showToast(`Bem-vindo de volta, ${usuarioLogado}!`, "success");
+
+    if (user.role === 'admin') {
+        document.getElementById("painelAdm").classList.remove("hidden");
+        carregarStatsAdm();
+    }
     await syncLoadAll();
+}
+
+async function carregarStatsAdm() {
+    const { data: ops } = await supabaseClient.from('users').select('username');
+    const { data: contacts } = await supabaseClient.from('contacts_queue').select('operator_name, status');
+    
+    let html = "";
+    ops.forEach(op => {
+        let naFila = contacts.filter(c => c.operator_name === op.username && c.status === 'Pendente').length;
+        let acionados = contacts.filter(c => c.operator_name === op.username && c.status === 'Enviado').length;
+        html += `<div class="adm-stat-card"><strong>${op.username}</strong><span>Fila: ${naFila}</span><span>Acionados: ${acionados}</span></div>`;
+    });
+    document.getElementById("admStats").innerHTML = html;
+}
+
+async function cadastrarOperador() {
+    let u = document.getElementById("newOpUser").value;
+    let p = document.getElementById("newOpPass").value;
+    if(!u || !p) return showToast("Preencha campos", "error");
+    await supabaseClient.from('users').insert([{ username: u, password: p, role: 'operador' }]);
+    showToast("Operador criado!");
+    carregarStatsAdm();
 }
 
 function logout() {
