@@ -3,149 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Cobrança - Simplic & Loft</title>
-    <!-- CSS Separado -->
-    <link rel="stylesheet" href="css/style.css">
-    <!-- FontAwesome para os ícones modernos -->
+    <title>Painel de Controle - Integração WhatsApp</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js para os Gráficos do Dashboard -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="brand-simplic">
-
-    <!-- ⚡ Loader de Inicialização -->
-    <div id="loader" class="loader-container">
-        <div class="spinner"></div>
-        <p>Carregando ferramenta de cobrança...</p>
-    </div>
-
-    <div class="wrapper">
-        <!-- 📱 Sidebar Lateral -->
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="brand-logo"></div>
+            <div class="brand">
+                <img src="assets/logo.png" alt="Logo" class="logo-img" onerror="this.src='https://placehold.co/150x40/111b21/ffffff?text=Logo'">
+                <span class="brand-name">ZapPanel</span>
             </div>
-            
-            <!-- Seletor de Marca (Simplic/Loft) que altera as cores do painel -->
-            <div class="brand-selector-container">
-                <label><i class="fa-solid fa-sliders"></i> Operar como:</label>
-                <select id="brandSelector" class="brand-select">
-                    <option value="simplic">Simplic</option>
-                    <option value="loft">Loft</option>
-                </select>
-            </div>
-
-            <nav class="sidebar-menu">
-                <ul>
-                    <li class="active" data-target="gerador-section">
-                        <a href="#"><i class="fa-solid fa-receipt"></i> <span>Gerador</span></a>
-                    </li>
-                    <li data-target="dashboard-section">
-                        <a href="#"><i class="fa-solid fa-chart-line"></i> <span>Dashboard</span></a>
-                    </li>
-                    <li data-target="whatsapp-section">
-                        <a href="#"><i class="fa-brands fa-whatsapp"></i> <span>WhatsApp</span></a>
-                    </li>
-                </ul>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-tab="whatsapp">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                </a>
+                <a href="#" class="nav-item" data-tab="settings">
+                    <i class="fa-solid fa-gear"></i> Configurações
+                </a>
             </nav>
+            <div class="sidebar-footer">
+                <span class="status-indicator online"></span>
+                <span class="status-text">Servidor Ativo</span>
+            </div>
         </aside>
 
-        <!-- Área Principal -->
+        <!-- Main Content -->
         <main class="main-content">
-            <header class="top-header">
-                <button id="toggleSidebar" class="toggle-btn"><i class="fa-solid fa-bars"></i></button>
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Pesquisar...">
+                </div>
                 <div class="user-profile">
-                    <span id="welcome-message">Painel de Cobrança <strong>Simplic</strong></span>
+                    <span class="user-name">Administrador</span>
+                    <div class="user-avatar">AD</div>
                 </div>
             </header>
 
-            <div class="content-body">
-                
-                <!-- 🎯 SEÇÃO DO GERADOR (O coração do seu site original) -->
-                <section id="gerador-section" class="tab-content active">
-                    <div class="section-title">
-                        <h2>Gerar Nova Cobrança</h2>
-                        <p>Preencha os dados abaixo para gerar o link e enviar ao cliente.</p>
-                    </div>
+            <!-- Tab: Dashboard -->
+            <section id="dashboard-tab" class="tab-content active">
+                <div class="section-header">
+                    <h1>Dashboard</h1>
+                    <p>Visão geral do sistema e métricas de envio</p>
+                </div>
 
-                    <div class="card-premium">
-                        <!-- IMPORTANTE: Mantenha aqui dentro EXATAMENTE os inputs e IDs que seus arquivos js usam. 
-                             Estou usando nomes genéricos comuns, ajuste os IDs abaixo se seus scripts usarem nomes diferentes -->
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="clientName">Nome do Cliente</label>
-                                <input type="text" id="clientName" placeholder="Ex: João Silva" required>
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon sent">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Mensagens Enviadas</h3>
+                            <p class="stat-value" id="count-sent">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon delivered">
+                            <i class="fa-solid fa-check-double"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Entregues</h3>
+                            <p class="stat-value" id="count-delivered">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon failed">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Falhas</h3>
+                            <p class="stat-value" id="count-failed">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Grid -->
+                <div class="dashboard-grid">
+                    <!-- Recent Activity -->
+                    <div class="card col-2">
+                        <div class="card-header">
+                            <h2>Atividades Recentes</h2>
+                            <button class="btn btn-sm" id="btn-refresh-logs"><i class="fa-solid fa-arrows-rotate"></i> Atualizar</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Destinatário</th>
+                                            <th>Mensagem</th>
+                                            <th>Status</th>
+                                            <th>Data/Hora</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="logs-table-body">
+                                        <!-- Preenchido dinamicamente -->
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="form-group">
-                                <label for="chargeValue">Valor da Cobrança (R$)</label>
-                                <input type="number" id="chargeValue" placeholder="0,00" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <!-- Quick Send -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Envio Rápido</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="quick-send-form">
+                                <div class="form-group">
+                                    <label for="phone">Telefone (com DDD)</label>
+                                    <input type="text" id="phone" placeholder="ex: 5511999999999" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="message">Mensagem</label>
+                                    <textarea id="message" rows="4" placeholder="Escreva sua mensagem aqui..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fa-solid fa-paper-plane"></i> Enviar Mensagem
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: WhatsApp -->
+            <section id="whatsapp-tab" class="tab-content">
+                <div class="section-header">
+                    <h1>Conexão WhatsApp</h1>
+                    <p>Gerencie a conexão da sua conta via QR Code</p>
+                </div>
+
+                <div class="whatsapp-container">
+                    <div class="card qr-card">
+                        <div class="card-header">
+                            <h2>QR Code de Conexão</h2>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="qr-placeholder" id="qr-container">
+                                <i class="fa-solid fa-qrcode qr-icon"></i>
+                                <p>Clique no botão abaixo para gerar o QR Code</p>
                             </div>
-                            <div class="form-group">
-                                <label for="dueDate">Data de Vencimento</label>
-                                <input type="date" id="dueDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="installments">Parcelas</label>
-                                <select id="installments">
-                                    <option value="1">À vista (1x)</option>
-                                    <option value="2">2x sem juros</option>
-                                    <option value="3">3x sem juros</option>
-                                </select>
+                            <div class="qr-actions">
+                                <button class="btn btn-success" id="btn-generate-qr">
+                                    <i class="fa-solid fa-sync"></i> Gerar Novo QR Code
+                                </button>
+                                <button class="btn btn-danger" id="btn-disconnect" disabled>
+                                    <i class="fa-solid fa-power-off"></i> Desconectar
+                                </button>
                             </div>
                         </div>
-
-                        <div class="form-group full-width">
-                            <label for="paymentLink">Link de Pagamento Gerado</label>
-                            <input type="text" id="paymentLink" placeholder="O link gerado aparecerá aqui..." readonly>
-                        </div>
-
-                        <div class="button-group">
-                            <button id="btnGenerate" class="btn-primary">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Link
-                            </button>
-                            <button id="btnSendWhatsApp" class="btn-whatsapp-action">
-                                <i class="fa-brands fa-whatsapp"></i> Enviar Cobrança
-                            </button>
-                        </div>
                     </div>
-                </section>
 
-                <!-- 📊 SEÇÃO DO DASHBOARD (Novo pedido) -->
-                <section id="dashboard-section" class="tab-content">
-                    <div class="section-title">
-                        <h2>Dashboard de Desempenho</h2>
-                        <p>Acompanhamento de conversões e disparos.</p>
-                    </div>
-                    <div class="charts-container">
-                        <div class="chart-box">
-                            <h3>Links Gerados vs Pagos</h3>
-                            <canvas id="conversionChart"></canvas>
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <h2>Instruções de Conexão</h2>
+                        </div>
+                        <div class="card-body">
+                            <ol class="instructions-list">
+                                <li>Abra o WhatsApp no seu celular.</li>
+                                <li>Toque em <strong>Aparelhos conectados</strong>.</li>
+                                <li>Selecione <strong>Conectar um aparelho</strong>.</li>
+                                <li>Aponte a câmera para a tela para escanear o QR Code.</li>
+                            </ol>
+                            <div class="connection-status-box" id="connection-status">
+                                <i class="fa-solid fa-circle-xmark"></i> Status: Dispositivo Desconectado
+                            </div>
                         </div>
                     </div>
-                </section>
-
-                <!-- 📱 SEÇÃO DO WHATSAPP (Ajustes de Mensagem) -->
-                <section id="whatsapp-section" class="tab-content">
-                    <div class="section-title">
-                        <h2>Modelos de Mensagem</h2>
-                        <p>Configure o texto padrão que é enviado no WhatsApp.</p>
-                    </div>
-                    <div class="card-premium">
-                        <div class="form-group">
-                            <label for="whatsappTemplate">Texto do Template</label>
-                            <textarea id="whatsappTemplate" rows="5">Olá [Nome], segue o link para pagamento da sua parcela no valor de R$ [Valor]: [Link]</textarea>
-                        </div>
-                    </div>
-                </section>
-
-            </div>
+                </div>
+            </section>
         </main>
     </div>
 
-    <!-- ⚡ IMPORTAÇÃO DOS SEUS SCRIPTS SEPARADOS -->
+    <!-- Core App Scripts -->
+    <script src="js/scripts.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/whatsapp.js"></script>
-    <script src="js/scripts.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
