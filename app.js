@@ -97,7 +97,7 @@ async function login(){
     }
         else if (userDigitado === "Fabio" && passDigitadoAtual === "fabio") {
         usuarioLogado = "Fabio";
-        empresasPermitidas = ["Loft"]; // Apenas Simplic
+        empresasPermitidas = ["Loft"]; // Apenas Loft
     }
     // -------------------------------------------------------------------------
     // 👑 NOVO USUÁRIO ADMINISTRADOR (Acessa Loft E Simplic)
@@ -795,6 +795,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         else if (usuarioLogado === "Mariana") empresasPermitidas = ["Simplic"];
         else if (usuarioLogado === "Maria") empresasPermitidas = ["Simplic"];
         else if (usuarioLogado === "Admin") empresasPermitidas = ["Simplic", "Loft"]; // Admin permitido em ambas
+        else if (usuarioLogado === "Fabio") empresasPermitidas = ["Loft"];
 
         // Se a empresa salva no navegador não for permitida para este usuário, desloga
         if (!empresasPermitidas.includes(empresaSelecionada)) {
