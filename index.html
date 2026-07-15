@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acesso ao Sistema de Envios</title>
-    <!-- Aqui linkamos o seu arquivo de estilo externo -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -21,27 +20,34 @@
         <button type="button" class="company-btn" id="btn-select-loft" onclick="selectCompany('loft')">Loft</button>
     </div>
 
-    <!-- O formulário envia os dados para o seu app.js -->
-    <form id="loginForm" action="/api/login" method="POST">
+    <!-- O formulário agora chama uma função JavaScript em vez de enviar para o servidor -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
         <!-- Campo oculto para enviar a empresa selecionada -->
         <input type="hidden" id="empresa" name="empresa" value="simplic">
 
         <div class="input-group">
             <label for="username">Usuário</label>
-            <input type="text" id="username" name="username" placeholder="Digite seu usuário" required>
+            <input type="text" id="username" placeholder="Digite seu usuário" required>
         </div>
 
         <div class="input-group">
             <label for="password">Senha</label>
-            <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+            <input type="password" id="password" placeholder="Digite sua senha" required>
         </div>
 
         <button type="submit" class="submit-btn btn-simplic" id="submitBtn">Entrar</button>
     </form>
 </div>
 
-<!-- Script simples para controlar a troca visual dos botões de login -->
 <script>
+    // LISTA DE USUÁRIOS DE TESTE (Simulando o banco de dados)
+    const usuariosDB = [
+      { username: "usuario1", senhaHash: "senha123" }, // Usuário antigo (Simplic padrão)
+      { username: "usuario2", senhaHash: "senha456" }, // Usuário antigo (Simplic padrão)
+      { username: "admin", senhaHash: "admin123", role: "ADMIN_GLOBAL" }, // Administrador Geral
+      { username: "loftuser", senhaHash: "loft123", empresa_origem: "loft" } // Usuário exclusivo da Loft
+    ];
+
     function selectCompany(company) {
         const btnSimplic = document.getElementById('btn-select-simplic');
         const btnLoft = document.getElementById('btn-select-loft');
@@ -59,6 +65,43 @@
             btnSimplic.classList.remove('active-simplic');
             submitBtn.className = 'submit-btn btn-loft';
         }
+    }
+
+    function handleLogin(event) {
+        event.preventDefault(); // Impede a página de recarregar e dar o erro 405
+
+        const usernameInput = document.getElementById('username').value;
+        const passwordInput = document.getElementById('password').value;
+        const empresaSelecionada = document.getElementById('empresa').value;
+
+        // Procura o usuário na lista
+        const usuario = usuariosDB.find(u => u.username === usernameInput);
+
+        if (!usuario || passwordInput !== usuario.senhaHash) {
+            alert("Erro: Usuário ou senha incorretos.");
+            return;
+        }
+
+        // REGRA 1: Se for Administrador Global, entra direto em qualquer uma
+        if (usuario.role === "ADMIN_GLOBAL") {
+            alert(`Bem-vindo, Administrador! Você acessou o painel da: ${empresaSelecionada.toUpperCase()}`);
+            // Aqui você pode redirecionar para sua tela de envios, ex:
+            // window.location.href = "painel.html"; 
+            return;
+        }
+
+        // REGRA 2: Usuários antigos sem empresa definida viram Simplic
+        const empresaDoUsuario = usuario.empresa_origem || "simplic";
+
+        // REGRA 3: Bloqueia acesso cruzado
+        if (empresaDoUsuario !== empresaSelecionada) {
+            alert(`Acesso negado: Este usuário é da ${empresaDoUsuario.toUpperCase()} e tentou entrar pela ${empresaSelecionada.toUpperCase()}.`);
+            return;
+        }
+
+        // Se passar em tudo:
+        alert(`Login realizado com sucesso! Bem-vindo ao painel da ${empresaSelecionada.toUpperCase()}.`);
+        // window.location.href = "painel.html";
     }
 </script>
 
