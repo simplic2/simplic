@@ -454,3 +454,6 @@ hr {
 
 .quadrado:hover { background: #2d3748 !important; }
 @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+.adm-stat-card { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--blue); }
+.adm-stat-card strong { color: var(--blue); display: block; margin-bottom: 5px; }
+.adm-stat-card span { font-size: 12px; display: block; }
