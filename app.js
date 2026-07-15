@@ -86,7 +86,7 @@ async function login(){
         empresaPermitida = "Simplic"; // Levi só pode acessar a Simplic
     } else if (userDigitado === "Mariana" && passDigitadoAtual === "123mudar") {
         usuarioLogado = "Mariana";
-        empresaPermitida = "Loft";     // Mariana só pode acessar a Loft
+        empresaPermitida = "Simplic";     // Mariana só pode acessar a Loft
     } else if (userDigitado === "Maria" && passDigitadoAtual === "duda2025") {
         usuarioLogado = "Maria";
         empresaPermitida = "Simplic"; // Maria só pode acessar a Simplic
