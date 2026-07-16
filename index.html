@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM Whatsapp</title>
-    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Stylesheet -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <!-- TOAST WRAPPER -->
     <div id="toast-container"></div>
 
     <!-- LOGIN AREA -->
@@ -21,7 +18,6 @@
             <p>Painel de Controle Operacional</p>
             <input id="user" placeholder="Usuário">
             <input id="pass" type="password" placeholder="Senha">
-            <!-- SELETOR DE CARTEIRA -->
             <select id="selectCarteira" style="margin-top: 12px; font-weight: 600;">
                 <option value="Simplic">Carteira Simplic</option>
                 <option value="Loft">Carteira Loft</option>
@@ -60,156 +56,124 @@
             <div class="header-app">
                 <h1>CRM Whatsapp</h1>
                 <div class="user-badge">
-                    <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
                     <span>Operador: <strong id="lblUsuario" style="color: var(--primary);">---</strong></span>
-                    
-                    <span id="sepJogo" style="color: rgba(255,255,255,0.15)">|</span>
-                    <a id="linkJogo" href="#" onclick="abrirModal('modalJogo')" style="color: var(--blue); font-size: 12px; text-decoration: none; font-weight: 600;">🎮 Jogo da Velha</a>
-                    
-                    <span id="sepMusica" style="color: rgba(255,255,255,0.15)">|</span>
-                    <a id="linkMusica" href="#" onclick="abrirModal('modalMusica')" style="color: var(--orange); font-size: 12px; text-decoration: none; font-weight: 600;">🎵 Player Premium</a>
-                    
-                    <span style="color: rgba(255,255,255,0.15)">|</span>
-                    <a href="#" onclick="logout()" style="color: var(--red); font-size: 12px; text-decoration: none; font-weight: 600;">Sair</a>
+                    <a href="#" onclick="abrirModal('modalJogo')" style="margin-left:10px; color: var(--blue);">🎮 Jogo</a>
+                    <a href="#" onclick="abrirModal('modalMusica')" style="margin-left:10px; color: var(--orange);">🎵 Música</a>
+                    <a href="#" onclick="logout()" style="margin-left:10px; color: var(--red);">Sair</a>
                 </div>
             </div>
 
-            <!-- METRICS & KPI DASHBOARD -->
+            <!-- KPI & INSTÂNCIAS -->
             <div class="kpi-container">
-                <div class="kpi-card">
-                    <span class="kpi-title">📋 Total na Fila</span>
-                    <span class="kpi-value" id="kpiTotalFila">0</span>
-                </div>
-                <div class="kpi-card">
-                    <span class="kpi-title">🚀 Enviados Hoje</span>
-                    <span class="kpi-value" id="kpiEnviados" style="color: var(--blue);">0</span>
-                </div>
-                <div class="kpi-card">
-                    <span class="kpi-title">🟢 Conectados / Ativos</span>
-                    <span class="kpi-value" id="kpiAtivos" style="color: var(--primary);">0</span>
-                </div>
-                <div class="kpi-card">
-                    <span class="kpi-title">⚠️ Contas Restritas</span>
-                    <span class="kpi-value" id="kpiRestritos" style="color: var(--orange);">0</span>
-                </div>
+                <div class="kpi-card"><span class="kpi-title">📋 Fila</span><span class="kpi-value" id="kpiTotalFila">0</span></div>
+                <div class="kpi-card"><span class="kpi-title">🚀 Enviados</span><span class="kpi-value" id="kpiEnviados">0</span></div>
             </div>
 
-            <!-- INSTANCES MANAGER -->
-            <div class="card" style="margin-bottom: 25px;">
-                <h3>📱 Instâncias de WhatsApp</h3>
-                <div class="flex-group" style="align-items: flex-end; flex-wrap: wrap;">
-                    <div style="flex: 2; min-width: 200px;">
-                        <label class="small">Número do WhatsApp</label>
-                        <input id="waNumber" placeholder="Ex: (11) 99999-9999" style="margin-top:4px;">
-                    </div>
-                    <div style="flex: 1; min-width: 130px;">
-                        <label class="small">Função</label>
-                        <select id="waRole" style="margin-top:4px;">
-                            <option value="preventive">Preventivo</option>
-                            <option value="acoes">Ações</option>
-                            <option value="reserva">Reserva</option>
-                        </select>
-                    </div>
-                    <div style="flex: 1; min-width: 140px;">
-                        <label class="small">Navegador</label>
-                        <select id="waBrowser" style="margin-top:4px;">
-                            <option value="chrome">Google Chrome</option>
-                            <option value="edge">Microsoft Edge</option>
-                        </select>
-                    </div>
-                    <button class="green" onclick="addWA()" style="margin-top:0; height: 45px; white-space: nowrap;">+ Conectar</button>
-                </div>
-                <div id="waList" style="margin-top: 15px;"></div>
+            <div class="card">
+                <h3>📱 Instâncias</h3>
+                <div id="waList"></div>
             </div>
 
-            <div class="grid">
-                <!-- QUEUE & CONTEXT FILTERS -->
-                <div style="display: flex; flex-direction: column; gap: 25px;">
-                    <div class="card" style="display: flex; flex-direction: column; flex: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <h3 style="margin: 0;">👥 Fila de Acionamentos</h3>
-                            <button class="green" onclick="abrirModalContatos()" style="margin: 0; padding: 6px 12px; font-size: 12px;">+ Importar Lista</button>
-                        </div>
-                        
-                        <div style="margin-bottom: 12px;">
-                            <input id="buscaContatoInput" oninput="filtrarEBuscarFila()" placeholder="🔍 Buscar por telefone ou nome na lista..." style="margin-top:0; padding: 10px;">
-                        </div>
-
-                        <div class="filter-tabs">
-                            <button id="filterTabAll" class="filter-btn active" onclick="mudarFiltroLista('todos')">Todos</button>
-                            <button id="filterTabPendente" class="filter-btn" onclick="mudarFiltroLista('Pendente')">Pendentes</button>
-                            <button id="filterTabEnviado" class="filter-btn" onclick="mudarFiltroLista('Enviado')">Enviados</button>
-                            <button id="filterTabErro" class="filter-btn" onclick="mudarFiltroLista('Erro')">Erros</button>
-                        </div>
-
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <label class="small">Registros correspondentes</label>
-                            <a href="#" onclick="limparContatos()" style="color: var(--red); font-size: 11px; text-decoration: none;">Limpar Fila Total</a>
-                        </div>
-
-                        <div id="lista" style="margin-top: 12px; min-height: 200px; max-height: 320px; overflow-y: auto; background: rgba(0,0,0,0.15); padding: 8px; border-radius: 8px;"></div>
-                        
-                        <div id="timerContainerBanner" class="timer-banner hidden">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <span style="font-size:20px; animation: rotate 2s infinite linear;">⏳</span>
-                                <div>
-                                    <div style="font-weight:700; font-size:14px;">Preparando redirecionamento...</div>
-                                    <div class="small" style="color: #c084fc;">A janela do WhatsApp abrirá em <strong id="lblRegressivoSegundo" style="font-size:15px; color:#fff;">5</strong> segundos.</div>
-                                </div>
-                            </div>
-                            <button class="red" onclick="cancelarEnvioRegressivo()" style="margin:0; padding:6px 12px; font-size:12px;">Cancelar</button>
-                        </div>
-
-                        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-                            <button id="btnProximoChamado" class="green" style="width: 100%; padding: 16px; font-size: 16px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);" onclick="iniciarContagemEnvio()">
-                                🚀 Abrir e Chamar Próximo Cliente
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SCRIPTS CARD -->
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin: 0;">📝 Mensagens & Scripts</h3>
-                        <button class="blue" onclick="abrirModalScriptNovo()" style="margin: 0; padding: 6px 12px; font-size: 12px;">+ Novo Script</button>
-                    </div>
-                    <hr style="margin: 10px 0;">
-                    <label class="small">Seus Scripts Selecionáveis</label>
-                    <div id="scriptsContainerList" style="margin-top: 8px; max-height: 150px; overflow-y: auto;"></div>
-                    <div class="small" style="margin-top: 18px; font-weight: 600;">Visualização Completa do Texto:</div>
-                    <div id="preview"></div>
-                </div>
-            </div>
-
-            <!-- MINI PLAYER FLOATING -->
-            <div id="containerMiniPlayer" class="card premium-player hidden" style="margin-top: 25px; display: flex; flex-direction: column; gap: 12px;">
-                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                    <h3 style="margin:0; display:flex; align-items:center; gap:10px;">
-                        <div id="visualizerEqualizer" class="soundwave-container">
-                            <div class="soundwave-bar"></div><div class="soundwave-bar"></div><div class="soundwave-bar"></div><div class="soundwave-bar"></div><div class="soundwave-bar"></div>
-                        </div>
-                        <span>Tocando agora: <span id="lblNomeMusicaTocando" style="color: var(--orange); font-size: 14px; font-weight:700;">Música</span></span>
-                    </h3>
-                    <button onclick="fecharMiniPlayer()" class="btn-icon" style="color: var(--red); font-size: 16px; padding:4px; background:rgba(239,68,68,0.1); border-radius:50%; width:24px; height:24px;">✕</button>
-                </div>
-                
-                <div id="wrapperAudioNativo" style="display: flex; align-items: center; gap: 15px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); flex-wrap: wrap;">
-                    <audio id="playerAudioNativo" controls style="flex: 1; height: 32px; min-width: 200px;"></audio>
-                    <div style="display: flex; gap: 8px;">
-                        <button onclick="alternarPlayAudio()" id="btnPlayPauseCustom" class="orange" style="margin: 0; padding: 6px 14px; font-size: 13px;">⏸ Pausar</button>
-                    </div>
-                </div>
-
-                <div id="wrapperAudioYoutube" class="hidden" style="border-radius:10px; overflow:hidden; border:1px solid var(--border-color); background:#000; display:flex; justify-content:center;">
-                    <iframe id="playerYoutubeIframe" width="100%" height="180" src="" title="Player de Mídia" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"></iframe>
-                </div>
+            <div class="grid" style="margin-top:20px;">
+                <div class="card" id="lista"></div>
+                <div class="card" id="preview"></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAIS E SCRIPTS FICAM APÓS O CONTEÚDO -->
-    <!-- (Seus modais originais aqui...) -->
+    <!-- MODAL EDITAR (CONSOLIDADO) -->
+    <div id="modalEditar" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Editar Instância</h3>
+            <label class="small">Número</label>
+            <input id="editModalNumero">
+            
+            <label class="small" style="margin-top: 10px; display: block;">Status</label>
+            <select id="editModalStatus" onchange="toggleTempoRestritoVisibilidade()">
+                <option value="ativo">Ativo</option>
+                <option value="restrito">Restrito</option>
+                <option value="banido">Banido</option>
+            </select>
+
+            <div id="containerTempoRestrito" class="hidden" style="margin-top: 10px;">
+                <label class="small">Tempo de Restrição</label>
+                <input id="editModalTempo" placeholder="Ex: 5">
+            </div>
+
+            <div class="flex-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="gray" onclick="fecharModal('modalEditar')">Cancelar</button>
+                <button id="btnSalvarEdicao" class="green">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL IMPORT CONTACTS -->
+    <div id="modalContatos" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Importar Contatos</h3>
+            <label class="small">Escolha o Script:</label>
+            <select id="modalSelectScriptDefinido" style="margin-top:4px; margin-bottom:12px;"></select>
+            <label class="small">Cole a lista (formato: telefone;nome):</label>
+            <textarea id="telefonesInputModal" rows="6" placeholder="5511999999999;João" style="margin-top:4px;"></textarea>
+            <div class="flex-group" style="margin-top: 20px;">
+                <button class="gray" onclick="fecharModal('modalContatos')" style="flex:1;">Cancelar</button>
+                <button class="green" onclick="salvarContatos()" style="flex:1;">Inserir na Fila</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MANAGEMENT SCRIPT -->
+    <div id="modalScript" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="tituloScriptModal">Criar Novo Script</h3>
+            <input type="hidden" id="editScriptId" value="">
+            <label class="small">Título do Script</label>
+            <input id="nomeScriptModal" style="margin-top:4px; margin-bottom:12px;">
+            <label class="small">Mensagem (use {nome}):</label>
+            <textarea id="textoScriptModal" rows="7" style="margin-top:4px;"></textarea>
+            <div class="flex-group" style="margin-top: 20px;">
+                <button class="gray" onclick="fecharModal('modalScript')" style="flex:1;">Cancelar</button>
+                <button class="blue" onclick="salvarScript()" style="flex:1;">Salvar Script</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MUSIC PLAYER -->
+    <div id="modalMusica" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>🎵 Player de Música</h3>
+            <div id="abaMusicaBusca">
+                <label class="small">Digite o artista ou música:</label>
+                <div class="flex-group" style="margin-top:4px; margin-bottom:10px;">
+                    <input id="inputBuscaNome" placeholder="Ex: Coldplay" style="margin-top:0;">
+                    <button class="blue" onclick="buscarMusicaPorNome()" style="margin-top:0; height: 45px;">Buscar</button>
+                </div>
+                <div id="containerResultadosBusca" style="max-height: 180px; overflow-y: auto;"></div>
+            </div>
+            <button class="gray" onclick="fecharModal('modalMusica')" style="width:100%; margin-top:15px;">Fechar</button>
+        </div>
+    </div>
+
+    <!-- MODAL MINI-GAME -->
+    <div id="modalJogo" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 320px; text-align: center;">
+            <h3>🎮 Jogo da Velha</h3>
+            <div id="tabuleiro" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 15px 0;">
+                <!-- Os 9 quadrados do jogo -->
+                <div class="quadrado" onclick="jogada(0)" style="background: var(--bg-input); height: 70px; border-radius: 8px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(1)" style="background: var(--bg-input); height: 70px; border-radius: 8px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(2)" style="background: var(--bg-input); height: 70px; border-radius: 8px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(3)" style="background: var(--bg-input); height: 70px; border-radius: 8px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(4)" style="background: var(--bg-input); height: 70px; border-radius: 8px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(5)" style="background: var(--bg-input); height: 70px; border-radius: 8px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(6)" style="background: var(--bg-input); height: 70px; border-radius: 8px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(7)" style="background: var(--bg-input); height: 70px; border-radius: 8px; cursor: pointer;"></div>
+                <div class="quadrado" onclick="jogada(8)" style="background: var(--bg-input); height: 70px; border-radius: 8px; cursor: pointer;"></div>
+            </div>
+            <button class="gray" onclick="fecharModal('modalJogo')">Fechar</button>
+        </div>
+    </div>
+    
     <script src="app.js"></script>
 </body>
 </html>
