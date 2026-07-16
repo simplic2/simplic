@@ -305,11 +305,13 @@ async function alterarStatusRapido(id, i, statusAlvo) {
 function abrirEditarModal(i) {
     contaEditandoIndex = i;
     let conta = whatsappAccounts[i];
+    
     document.getElementById("editModalNumero").value = conta.number;
     document.getElementById("editModalSent").value = conta.sent;
     document.getElementById("editModalStatus").value = conta.status;
     document.getElementById("editModalRole").value = conta.role || "preventive";
     document.getElementById("editModalBrowser").value = conta.browser || "chrome";
+    
     toggleTempoRestritoVisibilidade();
     
     document.getElementById("btnSalvarEdicao").onclick = async function() {
@@ -319,35 +321,43 @@ function abrirEditarModal(i) {
         let novaRole = document.getElementById("editModalRole").value;
         let novoBrowser = document.getElementById("editModalBrowser").value;
         
-        // Dentro da sua função salvarEdicao (dentro de abrirEditarModal)
-let restUntilValue = null;
-if(novoStatus === "restrito") {
-    let inputTempo = document.getElementById("editModalTempo").value;
-    let unidade = document.getElementById("editModalUnidade").value; 
-    
-    if(inputTempo > 0) {
-        // 1 dia = 86400000ms, 1 hora = 3600000ms
-        let multiplicador = unidade === 'dias' ? 86400000 : 3600000;
-        restUntilValue = Date.now() + (parseFloat(inputTempo) * multiplicador);
-    }
-}
+        let restUntilValue = null;
         
-        await supabaseClient.from('whatsapp_accounts').update({
-            number: novoNumero,
-            sent: novosAcionamentos,
-            status: novoStatus,
-            role: novaRole,
-            browser: novoBrowser,
-            restricted_until: restUntilValue
-        }).eq('id', conta.id);
+        if (novoStatus === "restrito") {
+            let inputTempo = document.getElementById("editModalTempo").value;
+            let unidade = document.getElementById("editModalUnidade").value; 
+            
+            if (inputTempo > 0) {
+                let multiplicador = unidade === 'dias' ? 86400000 : 3600000;
+                restUntilValue = Date.now() + (parseFloat(inputTempo) * multiplicador);
+            }
+        }
 
-        fecharModal("modalEditar");
-        showToast("Alterações salvas com sucesso!");
-        await syncLoadAll();
+        // Atualização no Supabase
+        const { error } = await supabaseClient
+            .from('whatsapp_accounts')
+            .update({ 
+                number: novoNumero,
+                sent: novosAcionamentos,
+                status: novoStatus,
+                role: novaRole,
+                browser: novoBrowser,
+                restricted_until: restUntilValue
+            })
+            .eq('id', conta.id);
+
+        if (error) {
+            console.error("Erro ao salvar:", error);
+            alert("Erro ao salvar: " + error.message);
+        } else {
+            fecharModal("modalEditar");
+            showToast("Alterações salvas com sucesso!");
+            await syncLoadAll(); // Garante que a lista na tela seja atualizada
+        }
     };
+    
     abrirModal("modalEditar");
 }
-
 async function removeWA(id){
     if(!confirm("Remover esta conta?")) return;
     await supabaseClient.from('whatsapp_accounts').delete().eq('id', id);
