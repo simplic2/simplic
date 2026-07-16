@@ -323,10 +323,10 @@ function abrirEditarModal(i) {
 let restUntilValue = null;
 if(novoStatus === "restrito") {
     let inputTempo = document.getElementById("editModalTempo").value;
-    let unidade = document.getElementById("editModalUnidade").value; // Precisamos criar esse seletor
+    let unidade = document.getElementById("editModalUnidade").value; 
     
     if(inputTempo > 0) {
-        // Se unidade for 'horas', multiplica por 1 hora. Se for 'dias', multiplica por 24 horas.
+        // 1 dia = 86400000ms, 1 hora = 3600000ms
         let multiplicador = unidade === 'dias' ? 86400000 : 3600000;
         restUntilValue = Date.now() + (parseFloat(inputTempo) * multiplicador);
     }
