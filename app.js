@@ -379,7 +379,10 @@ function mudarFiltroLista(statusAlvo) {
 }
 
 function filtrarEBuscarFila() {
-    let termoBusca = document.getElementById("buscaContatoInput").value.trim().toLowerCase();
+    let buscaInput = document.getElementById("buscaContatoInput");
+    if (!buscaInput) return; // Proteção contra erro de null
+
+    let termoBusca = buscaInput.value.trim().toLowerCase();
     let listaFiltrada = contatos;
 
     if (filtroStatusAtual !== 'todos') {
@@ -388,14 +391,11 @@ function filtrarEBuscarFila() {
 
     if (termoBusca) {
         listaFiltrada = listaFiltrada.filter(c => 
-            c.tel.toLowerCase().includes(termoBusca) || 
-            (c.script_texto && c.script_texto.toLowerCase().includes(termoBusca))
+            c.tel.toLowerCase().includes(termoBusca)
         );
     }
-
     renderContatos(listaFiltrada);
 }
-
 function renderContatos(dadosFila) {
     let html = "";
     if (dadosFila.length === 0) {
@@ -522,35 +522,23 @@ async function salvarScript(){
 
 function renderScripts() {
     let html = "";
-    if (listaScripts.length === 0) {
-        document.getElementById("scriptsContainerList").innerHTML = "";
-        document.getElementById("preview").innerText = "Nenhum script.";
-        return;
-    }
     listaScripts.forEach((s) => {
         let base64 = btoa(unescape(encodeURIComponent(s.texto)));
         html += `
         <div class="row" style="padding: 8px 6px;">
             <div style="display: flex; align-items: center; flex: 1; cursor: pointer;" onclick="selectScript(${s.id})">
-                <input type="radio" name="scriptSelect" class="radio-custom" ${s.selected ? "checked" : ""}>
                 <span style="font-weight: 600; color: ${s.selected ? 'var(--blue)' : '#fff'};">${s.nome}</span>
-            </div>
-            <div class="action-buttons">
-                <button onclick="prepararEdicaoScript(${s.id}, '${s.nome}', '${base64}')" class="btn-icon" style="color:#3b82f6;">📝</button>
-                <button onclick="removerScript(${s.id})" class="btn-icon" style="color:#ef4444;">✕</button>
             </div>
         </div>`;
     });
-  let containerScripts = document.getElementById("scriptsContainerList");
-    if (containerScripts) {
-        containerScripts.innerHTML = html;
-    }
+    
+    let containerScripts = document.getElementById("scriptsContainerList");
+    if (containerScripts) containerScripts.innerHTML = html;
 
-    // Proteção para o preview
     let containerPreview = document.getElementById("preview");
     if (containerPreview) {
         let ativo = listaScripts.find(x => x.selected);
-        containerPreview.innerText = ativo ? ativo.texto : "";
+        containerPreview.innerText = ativo ? ativo.texto : "Nenhum script.";
     }
 }
 
