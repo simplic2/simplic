@@ -541,9 +541,17 @@ function renderScripts() {
             </div>
         </div>`;
     });
-    document.getElementById("scriptsContainerList").innerHTML = html;
-    let ativo = listaScripts.find(x => x.selected);
-    document.getElementById("preview").innerText = ativo ? ativo.texto : "";
+  let containerScripts = document.getElementById("scriptsContainerList");
+    if (containerScripts) {
+        containerScripts.innerHTML = html;
+    }
+
+    // Proteção para o preview
+    let containerPreview = document.getElementById("preview");
+    if (containerPreview) {
+        let ativo = listaScripts.find(x => x.selected);
+        containerPreview.innerText = ativo ? ativo.texto : "";
+    }
 }
 
 function prepararEdicaoScript(id, nome, b64) {
