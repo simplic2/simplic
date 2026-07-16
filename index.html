@@ -8,10 +8,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <div id="toast-container"></div>
-
-    <!-- LOGIN AREA -->
     <div id="login" class="login">
         <div class="box">
             <h2>CRM Whatsapp</h2>
@@ -25,34 +22,14 @@
             <button class="green" style="width:100%; margin-top: 18px;" onclick="login()">Entrar no Sistema</button>
         </div>
     </div>
-
-    <!-- MAIN CONTAINER -->
     <div id="app" class="hidden">
         <div class="container">
-            
-            <!-- PAINEL ADMINISTRATIVO -->
             <div id="painelAdm" class="card hidden" style="margin-bottom: 25px; border: 2px solid var(--blue);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 style="margin: 0;">👑 Painel Administrativo</h3>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="blue" style="margin:0; padding: 6px 12px;" onclick="carregarStatsAdm('Simplic')">Ver Simplic</button>
-                        <button class="blue" style="margin:0; padding: 6px 12px;" onclick="carregarStatsAdm('Loft')">Ver Loft</button>
-                        <button class="gray" style="margin:0; padding: 6px 12px;" onclick="carregarStatsAdm('todos')">Ver Todos</button>
-                    </div>
                 </div>
                 <div id="admStats" class="grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 15px;"></div>
-                <div class="flex-group">
-                    <input id="newOpUser" placeholder="Novo Usuário">
-                    <input id="newOpPass" placeholder="Nova Senha">
-                    <select id="newOpCarteira" style="margin-top:4px;">
-                        <option value="Simplic">Simplic</option>
-                        <option value="Loft">Loft</option>
-                    </select>
-                    <button class="green" onclick="cadastrarOperador()">Criar Usuário</button>
-                </div>
             </div>
-
-            <!-- HEADER -->
             <div class="header-app">
                 <h1>CRM Whatsapp</h1>
                 <div class="user-badge">
@@ -62,21 +39,20 @@
                     <a href="#" onclick="logout()" style="margin-left:10px; color: var(--red);">Sair</a>
                 </div>
             </div>
-
-            <!-- KPI & INSTÂNCIAS -->
             <div class="kpi-container">
                 <div class="kpi-card"><span class="kpi-title">📋 Fila</span><span class="kpi-value" id="kpiTotalFila">0</span></div>
                 <div class="kpi-card"><span class="kpi-title">🚀 Enviados</span><span class="kpi-value" id="kpiEnviados">0</span></div>
             </div>
-
             <div class="card">
                 <h3>📱 Instâncias</h3>
                 <div id="waList"></div>
             </div>
-
             <div class="grid" style="margin-top:20px;">
-                <div class="card" id="lista"></div>
-              <div class="card">
+                <div class="card" id="lista">
+                    <h3>📋 Fila de Contatos</h3>
+                    <input id="buscaContatoInput" placeholder="Buscar por número..." oninput="filtrarEBuscarFila()">
+                </div>
+                <div class="card">
                     <h3>📝 Scripts & Preview</h3>
                     <div id="scriptsContainerList" style="max-height: 150px; overflow-y: auto;"></div>
                     <hr>
@@ -84,8 +60,8 @@
                     <div id="preview"></div>
                 </div>
             </div>
-        </div> <!-- Fim da div container -->
-    </div> <!-- Fim da div app -->
+        </div>
+    </div>
 
     <!-- MODAL EDITAR (CONSOLIDADO) -->
     <div id="modalEditar" class="modal-overlay hidden">
